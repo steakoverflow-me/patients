@@ -18,4 +18,4 @@
   (ANY "/ping" _ {:status 200 :headers {"content-type" "text/plain"} :body "pong"})
   page-404)
 
-(run-jetty app {:port 8080 :join? true})
+(defn -main [] (run-jetty app {:port 8080 :join? true}))
