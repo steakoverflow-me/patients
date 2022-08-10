@@ -8,7 +8,7 @@
    :headers {"content-type" "text/plain"}
    :body "Application index!"})
 
-(defn page-404 []
+(defn page-404 [request]
   {:status 404
    :headers {"content-type" "text/plain"}
    :body "Page not found."})
