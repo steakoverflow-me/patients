@@ -1,6 +1,6 @@
 (defproject patients "0.1.0-SNAPSHOT"
-  :description "Test task for Health Samurai"
-  :url "https://github.com/steakoverflow-me/patients"
+  :description "Test app"
+  :url ""
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
@@ -13,8 +13,8 @@
 
   :main patients.app
 
-  :profiles {:dev {:plugins []
-                   :dependencies []
-                   :source-paths ["dev"]}})
-
-
+  :profiles {:dev  {:plugins []
+                    :dependencies []
+                    :source-paths ["dev"]}
+             :repl {:plugins [[cider/cider-nrepl "0.28.4"]
+                              [mx.cider/enrich-classpath "1.9.0"]]}})
