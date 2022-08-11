@@ -1,2 +1,7 @@
+.#*
+.nrepl-port
+.lein-failures
+.lein-repl-history
+
 target/
 node_modules/
