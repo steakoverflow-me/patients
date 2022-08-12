@@ -1,33 +1,43 @@
 (ns patients.web-test
   (:require
-    [patients.app :refer [app]]
-    [ring.adapter.jetty :refer [run-jetty]]
-    [clj-http.client :as http]
-    [clojure.test :refer [deftest use-fixtures is]]))
+   [patients.fixtures :refer [with-server test-port]]
+   [clj-http.client :as http]
+   [clojure.test :refer [deftest use-fixtures is]]
+   [clojure.test.check.generators :as gen]))
 
-(declare test-port)
-
-(defn with-server
-  [f]
-  (let [server (run-jetty app {:port 0 :join? false})
-        port (-> server .getConnectors first .getLocalPort)]
-    (with-redefs [test-port port]
-      (try
-        (f)
-        (finally
-          (.stop server))))))
-
-(use-fixtures :each with-server)
+(use-fixtures :once with-server)
 
 (defn url [relative]
   (str "http://localhost:" test-port relative))
 
+(defn http-req [method relative]
+  (let [req-fn (case (.toLowerCase method)
+                 "get"    (partial http/get)
+                 "post"   (partial http/post)
+                 "put"    (partial http/put)
+                 "delete" (partial http/delete)
+                 "head"   (partial http/head)
+                 (throw (IllegalArgumentException. (format "Wrong HTTP method $s" method))))]
+    (req-fn (url relative) {:throw-exceptions false})))
+()
 (defn http-get [relative]
-  (http/get (url relative) {:throw-exceptions false}))
+  (http-req "GET" relative))
+
+(deftest test-ping
+  (is (= "pong" ((http-req "get"    "/ping") :body)))
+  (is (= "pong" ((http-req "post"   "/ping") :body)))
+  (is (= "pong" ((http-req "put"    "/ping") :body)))
+  (is (= "pong" ((http-req "delete" "/ping") :body)))
+  (is (= (str (.length "pong")) ((:headers (http-req "head" "/ping")) "content-length"))))
 
 (deftest test-static
-  (is (= "pong" ((http-get "/ping") :body)))
-  (is (= "Application index!" ((http-get "") :body))))
+  (is (= "Application index!" ((http-get "/") :body))))
+
+(defn generate-string-except-routes []
+  (let [predicate (fn [in]
+                    (= (some #{in} ["" "ping"]) nil))]
+        (gen/sample (gen/such-that predicate gen/string-alphanumeric))))
 
 (deftest test-404
-  (is (= "Page not found." ((http-get "/random") :body))))
+  (def u (str "/" (first (generate-string-except-routes))))
+  (is (= 404 ((http-get u) :status))))
