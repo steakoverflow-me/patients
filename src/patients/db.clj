@@ -7,8 +7,8 @@
 (def pg-uri (format "postgres://%s:%s@%s:%s/%s" cfg/db-user cfg/db-password cfg/db-host cfg/db-port cfg/db-name))
 
 (defn db-info []
-  {:columns      (j/query pg-uri [sql/db-info-cols])
-   :foregin-keys (j/query pg-uri [sql/db-info-fks])})
+  {:columns (set (j/query pg-uri [sql/db-info-cols]))
+   :foregin-keys (set (j/query pg-uri [sql/db-info-fks]))})
 
 (defn init-database []
   (j/with-db-transaction [t-con pg-uri]

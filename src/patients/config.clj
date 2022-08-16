@@ -15,8 +15,8 @@
 (def db-name     (or (System/getenv "DB_NAME")
                      "postgres"))
 
-(def db-structure {:columns
- ({:table_name "genders",
+(def db-structure '{:columns
+#{{:table_name "genders",
    :column_name "id",
    :data_type "integer",
    :character_maximum_length nil,
@@ -63,10 +63,10 @@
    :data_type "character varying",
    :character_maximum_length 32,
    :is_nullable "YES",
-   :column_default nil}),
+   :column_default nil}},
  :foregin-keys
- ({:table_name "patients",
+ #{{:table_name "patients",
    :column_name "gender_id",
    :foreign_table_schema "public",
    :foreign_table_name "genders",
-   :foreign_column_name "id"})})
+   :foreign_column_name "id"}}})

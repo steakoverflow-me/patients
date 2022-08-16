@@ -26,7 +26,8 @@
 
              :test {:dependencies [[clj-http "3.12.3"]
                                    [eftest "0.5.9"]
-                                   [org.clojure/test.check "1.1.1"]]}
+                                   [org.clojure/test.check "1.1.1"]
+                                   [io.zonky.test/embedded-postgres "2.0.0"]]}
 
              :repl [:test
                     {:plugins [[cider/cider-nrepl "0.28.4"]

@@ -1,7 +1,9 @@
 (ns patients.fixtures
   (:require
    [patients.app :refer [app]]
-   [ring.adapter.jetty :refer [run-jetty]]))
+   [patients.db :as db]
+   [ring.adapter.jetty :refer [run-jetty]])
+  (:import io.zonky.test.db.postgres.embedded.EmbeddedPostgres))
 
 (declare test-port)
 
@@ -14,3 +16,13 @@
         (f)
         (finally
           (.stop server))))))
+
+(defn with-db
+  [f]
+  (let [pg (EmbeddedPostgres/start)
+        pg-uri (format "postgres://localhost:%s/postgres?user=postgres" (.getPort pg))]
+    (db/init-database)
+    (try
+      (f)
+      (finally
+        (.close pg)))))
