@@ -43,4 +43,4 @@ SELECT
     patients.birthdate AS birthdate,
     patients.address AS address,
     patients.oms AS oms
-FROM patients JOIN genders ON genders.id = patients.gender_id")
+FROM patients LEFT JOIN genders ON genders.id = patients.gender_id")

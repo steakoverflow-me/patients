@@ -1,7 +1,7 @@
 (ns patients.db
   (:require [clojure.java.jdbc :as j]
             [clojure.tools.logging :as log]
-            [java-time :refer [local-date]]
+            [java-time :as jt]
             [patients.sql :as sql]
             [patients.config :as cfg]))
 
@@ -32,7 +32,7 @@
 (defn convert-birthdate-to-local-date [patient]
   (update patient :birthdate (fn [bd-in]
                                (let [bd (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
-                                 (local-date bd)))))
+                                 (jt/local-date bd)))))
 
 (defn insert! [patient]
   (assert (nil? (:id patient)))
@@ -43,17 +43,17 @@
   (j/update! pg-uri :patients patient))
 
 (defn list-filtered [filters]
-  (let [wheres (str (if (some? (:id filters)) (format "\nWHERE patients.id = %s" (:id filters)) "")
-                    (if (some? (:name filters)) (format "\nWHERE patients.name LIKE '%%%s%%'" (:name filters)) "")
-                    (if (some? (:gender_id filters)) (format "\nWHERE patients.gender_id = %s" (:gender_id filters)) "")
+  (let [wheres (str (if (some? (:id filters)) (format "\nAND patients.id = %s" (:id filters)) "")
+                    (if (some? (:name filters)) (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)) "")
+                    (if (some? (:gender_id filters)) (format "\nAND patients.gender_id = %s" (:gender_id filters)) "")
                     (if (and (some? (get-in filters [:birthdate :from]))
                              (some? (get-in filters [:birthdate :to])))
-                      (format "\nWHERE patients.birthdate >= %s AND patients.birthdate <= %s"
-                              (get-in filters [:birthdate :from])
-                              (get-in filters [:birthdate :to]))
+                      (format "\nAND patients.birthdate >= '%s' AND patients.birthdate <= '%s'"
+                              (jt/format (get-in filters [:birthdate :from]))
+                              (jt/format (get-in filters [:birthdate :to])))
                       "")
-                    (if (some? (:address filters)) (format "\nWHERE patients.address LIKE '%%%s%%'" (:address filters)) "")
-                    (if (some? (:oms filters)) (format "\nWHERE patients.oms LIKE '%%%s%%'" (:oms filters)) ""))]
-    (println (pr-str wheres))
-    (map convert-birthdate-to-local-date (j/query pg-uri (str sql/list wheres ";")))))
+                    (if (some? (:address filters)) (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)) "")
+                    (if (some? (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)) ""))]
+    (println wheres)
+    (map convert-birthdate-to-local-date (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";")))))
 
