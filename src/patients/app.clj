@@ -1,9 +1,10 @@
 (ns patients.app
   (:require
    [patients.db :as db]
-
    [ring.adapter.jetty :refer [run-jetty]]
-   [compojure.core :refer [GET ANY defroutes]]))
+   [ring.middleware.defaults :refer [api-defaults wrap-defaults]]
+   [compojure.core :refer [GET ANY defroutes]]
+   [compojure.handler :as handler]))
 
 (defn page-index [request]
   {:status 200
@@ -18,14 +19,15 @@
 (defn page-db-info [request]
   {:status 200
    :headers {"content-type" "text/plain"}
-   :body (clojure.pprint/write (db/db-info) :stream nil)})
+   :body (pr-str (db/db-info))})
 
 (defroutes app
   (GET "/"        request (page-index request))
   (GET "/db-info" request (page-db-info request))
   (ANY "/ping" _ {:status 200 :headers {"content-type" "text/plain"} :body "pong"})
+  (GET "/list"    {params :params} (db/list-filtered 'params))
   page-404)
 
 (defn -main []
   (db/init-database)
-  (run-jetty app {:port 8080 :join? true}))
+  (run-jetty (wrap-defaults app api-defaults) {:port 8080 :join? true}))

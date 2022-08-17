@@ -1,9 +1,9 @@
 (ns patients.web-test
   (:require
    [patients.fixtures :refer [with-server test-port]]
+   [patients.common-test :refer [generate-string-except]]
    [clj-http.client :as http]
-   [clojure.test :refer [deftest use-fixtures is]]
-   [clojure.test.check.generators :as gen]))
+   [clojure.test :refer [deftest use-fixtures is]]))
 
 (use-fixtures :once with-server)
 
@@ -33,11 +33,6 @@
 (deftest test-static
   (is (= "Application index!" ((http-get "/") :body))))
 
-(defn generate-string-except-routes []
-  (let [predicate (fn [in]
-                    (= (some #{in} ["" "ping"]) nil))]
-        (gen/sample (gen/such-that predicate gen/string-alphanumeric))))
-
 (deftest test-404
-  (def u (str "/" (first (generate-string-except-routes))))
-  (is (= 404 ((http-get u) :status))))
+  (def url-404 (str "/" (first (generate-string-except ["" "ping" "db-info"]))))
+  (is (= 404 ((http-get url-404) :status))))

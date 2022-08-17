@@ -19,10 +19,10 @@
 
 (defn with-db
   [f]
-  (let [pg (EmbeddedPostgres/start)
-        pg-uri (format "postgres://localhost:%s/postgres?user=postgres" (.getPort pg))]
-    (db/init-database)
-    (try
-      (f)
-      (finally
-        (.close pg)))))
+  (let [pg (EmbeddedPostgres/start)]
+    (with-redefs [db/pg-uri (format "postgres://localhost:%s/postgres?user=postgres" (.getPort pg))]
+      (db/init-database)
+      (try
+        (f)
+        (finally
+          (.close pg))))))

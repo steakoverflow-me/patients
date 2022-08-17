@@ -34,3 +34,13 @@ DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO %s;
 GRANT ALL ON SCHEMA public TO public;" cfg/db-user))
+
+(def list "
+SELECT
+    patients.id AS id,
+    patients.name AS name,
+    genders.name AS gender,
+    patients.birthdate AS birthdate,
+    patients.address AS address,
+    patients.oms AS oms
+FROM patients JOIN genders ON genders.id = patients.gender_id")

@@ -7,13 +7,13 @@
                      "postgrespw"))
 
 (def db-host     (or (System/getenv "DB_HOST")
-                     "localhost"))
+                     "0.0.0.0"))
 
 (def db-port     (or (System/getenv "DB_PORT")
-                     "55000"))
+                     "5432"))
 
 (def db-name     (or (System/getenv "DB_NAME")
-                     "postgres"))
+                     "patients"))
 
 (def db-structure '{:columns
 #{{:table_name "genders",
@@ -42,7 +42,7 @@
    :column_default nil}
   {:table_name "patients",
    :column_name "address",
-   :data_type "json",
+   :data_type "text",
    :character_maximum_length nil,
    :is_nullable "NO",
    :column_default nil}

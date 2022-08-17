@@ -7,16 +7,19 @@
   :plugins [[lein-cloverage "1.2.4"]]
 
   :dependencies [[org.clojure/clojure "1.9.0"]
-
+                 [org.clojure/data.json "2.4.0"] 
                  [org.clojure/tools.logging "1.2.4"]
 
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
+                 [ring/ring-defaults "0.3.3"]
 
                  [compojure "1.7.0"]
 
                  [org.clojure/java.jdbc "0.7.12"]
-                 [org.postgresql/postgresql "42.4.1"]]
+                 [org.postgresql/postgresql "42.4.1"]
+
+                 [clojure.java-time "0.3.2"]]
 
   :main patients.app
 
