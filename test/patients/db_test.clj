@@ -32,11 +32,11 @@
         patient-out {:id 1
                      :name "Sasha"
                      :gender_id 1
-                     :birthdate (jt/local-date "1985-08-27")
+                     :birthdate "1985-08-27"
                      :address address
                      :oms "0123456789"}]
     (db/insert! patient-in)
-    (is (= (first (map db/convert-birthdate-to-local-date (j/query db/pg-uri ["SELECT * FROM patients;"]))) patient-out)))
+    (is (= (dissoc (db/get-one 1) :gender) patient-out)))
 
   (doseq [patient dataset-list] (db/insert! patient))
   (is (= 101 (-> (j/query db/pg-uri ["SELECT COUNT(*) FROM patients;"]) first :count)))
@@ -58,8 +58,8 @@
         dates2 (repeatedly 100 #(generate-local-date))
         dates (map vector dates1 dates2)]
     (doseq [ds dates]
-      (is (every? #(and (jt/not-before? (:birthdate %) (apply jt/min ds))
-                        (jt/not-after? (:birthdate %) (apply jt/max ds)))
+      (is (every? #(and (>= (compare (:birthdate %) (jt/format (apply jt/min ds))) 0)
+                        (<= (compare (:birthdate %) (jt/format (apply jt/max ds))) 0))
                   (db/list-filtered {:birthdate {:from (apply jt/min ds) :to (apply jt/max ds)}})))))
 
   (let [id (+ 102 (rand-int 1000))]

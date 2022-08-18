@@ -40,14 +40,19 @@ SELECT
     patients.id AS id,
     patients.name AS name,
     genders.name AS gender,
-    patients.birthdate AS birthdate,
+    TO_CHAR(patients.birthdate, 'YYYY-MM-DD') AS birthdate,
     patients.address AS address,
     patients.oms AS oms
 FROM patients LEFT JOIN genders ON genders.id = patients.gender_id")
 
 (def get "
 SELECT
-    patients.*,
-    genders.name AS gender
+    patients.id AS id,
+    patients.name AS name,
+    patients.gender_id AS gender_id,
+    genders.name AS gender,
+    TO_CHAR(patients.birthdate, 'YYYY-MM-DD') AS birthdate,
+    patients.address AS address,
+    patients.oms AS oms
 FROM patients LEFT JOIN genders ON genders.id = patients.gender_id
 WHERE patients.id = ?;")

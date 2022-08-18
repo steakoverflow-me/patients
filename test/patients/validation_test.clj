@@ -86,6 +86,5 @@
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
                  :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
     (let [result (v/do-validated (fn [_] num) invalid)]
-      (is (= 5 (count (:body result))))
-      (is (= 400 (:status result))))
-    (is (= {:body num :status 200} (v/do-validated (fn [_] num) valid)))))
+      (is (= 5 (count (:errors result)))))
+    (is (= num (v/do-validated (fn [_] num) valid)))))

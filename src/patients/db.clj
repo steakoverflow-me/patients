@@ -31,12 +31,12 @@
 
 (defn convert-birthdate-to-local-date [patient]
   (update patient :birthdate (fn [bd-in]
-                               (let [bd (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
-                                 (println (str "BD:\t" bd "\tPATIENT:\t" patient))
+                               (let [bd-in (patient :birthdate)
+                                     bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
                                  (jt/local-date bd)))))
 
 (defn get-one [id]
-  (first (map convert-birthdate-to-local-date (j/query pg-uri [sql/get id]))))
+  (first (j/query pg-uri [sql/get id])))
 
 (defn insert! [patient]
   (assert (nil? (:id patient)))
@@ -44,7 +44,7 @@
 
 (defn update! [patient]
   (assert (some? (:id patient)))
-  (j/update! pg-uri :patients patient ["id = ?" (:id patient)]))
+  (j/update! pg-uri :patients (update patient :birthdate jt/local-date) ["id = ?" (:id patient)]))
 
 (defn delete! [id]
   (j/delete! pg-uri :patients ["id = ?" id]))
@@ -61,5 +61,6 @@
                       "")
                     (if (some? (:address filters)) (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)) "")
                     (if (some? (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)) ""))]
-    (map convert-birthdate-to-local-date (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";")))))
+    (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
+
 
