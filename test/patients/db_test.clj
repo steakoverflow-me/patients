@@ -53,11 +53,26 @@
       (is (every? #(and (str/includes? (:name %) (first ss))
                         (str/includes? (:address %) (last ss)))
                   (db/list-filtered {:name (first ss) :address (last ss)})))))
+
   (let [dates1 (repeatedly 100 #(generate-local-date))
         dates2 (repeatedly 100 #(generate-local-date))
         dates (map vector dates1 dates2)]
     (doseq [ds dates]
-      (println (jt/format (apply jt/min ds)))
       (is (every? #(and (jt/not-before? (:birthdate %) (apply jt/min ds))
                         (jt/not-after? (:birthdate %) (apply jt/max ds)))
-                  (db/list-filtered {:birthdate {:from (apply jt/min ds) :to (apply jt/max ds)}}))))))
+                  (db/list-filtered {:birthdate {:from (apply jt/min ds) :to (apply jt/max ds)}})))))
+
+  (let [id (+ 102 (rand-int 1000))]
+    (is (nil? (db/get-one id))))
+
+  (let [id       (inc (rand-int 101))
+        old      (db/get-one id)
+        new-name (first (generate-string-except [] 3))
+        new      (update old :name (constantly new-name))]
+    (println new)
+    (db/update! (dissoc new :gender))
+    (is (= (db/get-one id) new)))
+
+  (let [id (inc (rand-int 101))]
+    (db/delete! id)
+    (is (nil? (db/get-one id)))))

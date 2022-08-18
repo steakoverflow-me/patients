@@ -44,3 +44,10 @@ SELECT
     patients.address AS address,
     patients.oms AS oms
 FROM patients LEFT JOIN genders ON genders.id = patients.gender_id")
+
+(def get "
+SELECT
+    patients.*,
+    genders.name AS gender
+FROM patients LEFT JOIN genders ON genders.id = patients.gender_id
+WHERE patients.id = ?;")
