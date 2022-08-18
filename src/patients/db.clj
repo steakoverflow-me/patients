@@ -35,8 +35,9 @@
                                      bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
                                  (jt/local-date bd)))))
 
+;; Непонятно, почему не передаётся first
 (defn get-one [id]
-  (first (j/query pg-uri [sql/get id])))
+  (j/query pg-uri [sql/get (Integer/parseInt id)]))
 
 (defn insert! [patient]
   (assert (nil? (:id patient)))
