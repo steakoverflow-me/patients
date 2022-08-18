@@ -72,3 +72,20 @@
                  :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
     (is (= 5 (count (v/validate invalid))))
     (is (empty? (v/validate valid)))))
+
+(deftest do-validated-test
+  (let [num     (rand-int 100)
+        invalid {:name      (generate-special-string-of-length 1)
+                 :gender-id -1
+                 :birthdate (jt/local-date "2050-01-01")
+                 :address   ""
+                 :oms       (generate-string-of-length 10)}
+        valid   {:name      (generate-string-of-length (inc (rand-int 128)))
+                 :gender-id (inc (rand-int 10))
+                 :birthdate (generate-local-date)
+                 :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
+                 :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
+    (let [result (v/do-validated (fn [_] num) invalid)]
+      (is (= 5 (count (:body result))))
+      (is (= 400 (:status result))))
+    (is (= {:body num :status 200} (v/do-validated (fn [_] num) valid)))))

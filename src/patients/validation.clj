@@ -27,6 +27,6 @@
 (defn do-validated [f patient]
   (let [result (validate patient)]
     (if (empty? result)
-      (try ({:status 200 :body (f patient)})
-           (catch Exception e ({:status 500 :body (.getMessage e)})))
-      ({:status 400 :body result}))))
+      (try {:status 200 :body (f patient)}
+           (catch Exception e {:status 500 :body (.getMessage e)}))
+      {:status 400 :body result})))
