@@ -4,11 +4,18 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :plugins [[lein-cloverage "1.2.4"]]
+  :plugins [[lein-cloverage "1.2.4"]
+            [lein-cljsbuild "1.1.8"]]
 
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/data.json "2.4.0"]
                  [org.clojure/tools.logging "1.2.4"]
+
+                 [org.clojure/clojurescript "1.11.60"]
+                 [reagent "1.1.1"]
+                 [cljsjs/react "18.2.0-0"]
+                 [cljsjs/react-dom "18.2.0-0"]
+                 [com.fasterxml.jackson.core/jackson-core "2.13.3"]
 
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
@@ -35,4 +42,13 @@
 
              :repl [:test
                     {:plugins [[cider/cider-nrepl "0.28.4"]
-                               [mx.cider/enrich-classpath "1.9.0"]]}]})
+                               [mx.cider/enrich-classpath "1.9.0"]]}]}
+
+  :cljsbuild {:builds
+              [{:source-paths ["src/patients/script"]
+                :jar true
+                :compiler
+                {:output-to "resources/public/js/app.js", :optimizations :advanced}
+                :builds nil}]}
+
+  :hooks [leiningen.cljsbuild])
