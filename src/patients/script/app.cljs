@@ -1,7 +1,11 @@
 (ns patients.script.app
   (:require [reagent.core :as r]
             [reagent.dom :as rdom]
-            [clojure.string :as str]))
+            ["react-dom/client" :refer [createRoot]]
+            [clojure.string :as str]
+            [ajax.core :refer [GET POST]]))
+
+(defonce data (r/atom []))
 
 (defonce timer (r/atom (js/Date.)))
 
@@ -9,6 +13,16 @@
 
 (defonce time-updater (js/setInterval
                        #(reset! timer (js/Date.)) 1000))
+
+(defn data-table []
+  [:table [[:tr [:th "ID"][:th "Name"][:th "Gender"][:th "Address"][:rh "OMS #"]]] (str @data)])
+                ;; (map #([:tr
+                ;;          [:td (str (:id %))]
+                ;;          [:td (:name %)]
+                ;;          [:td (:gender %)]
+                ;;          [:td (:address %)]
+                ;;          [:td (:oms %)]]
+                ;;       )
 
 (defn greeting [message]
   [:h1 message])
@@ -26,10 +40,29 @@
             :value @time-color
             :on-change #(reset! time-color (-> % .-target .-value))}]])
 
+(defn get-list-handler [list]
+  (println list)
+  (reset! data list))
+
+(defn get-list
+  ([] (get-list {}))
+  ([filters] (GET "/patients" {:params filters
+                               :handler get-list-handler})))
+
 (defn simple-example []
   [:div
    [greeting "Hello world, it is now"]
    [clock]
-   [color-input]])
+   [color-input]
+   [data-table]])
 
-(rdom/render [simple-example] (js/document.getElementById "app"))
+(def root (createRoot (js/document.getElementById "app")))
+
+(defn ^:export run []
+  (prn "Start render")
+  (.render root [(r/as-element (simple-example))])
+  (prn "Render complete")
+  (get-list)
+  (prn data))
+
+(run)

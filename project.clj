@@ -15,6 +15,7 @@
                  [reagent "1.1.1"]
                  [cljsjs/react "18.2.0-0"]
                  [cljsjs/react-dom "18.2.0-0"]
+                 [cljs-ajax "0.7.5"]
                  [com.fasterxml.jackson.core/jackson-core "2.13.3"]
 
                  [ring/ring-core "1.9.5"]
@@ -36,19 +37,15 @@
   :profiles {:dev  {:source-paths ["dev"]}
 
              :test {:dependencies [[clj-http "3.12.3"]
-                                   [eftest "0.5.9"]
-                                   [org.clojure/test.check "1.1.1"]
-                                   [io.zonky.test/embedded-postgres "2.0.0"]]}
-
-             :repl [:test
-                    {:plugins [[cider/cider-nrepl "0.28.4"]
-                               [mx.cider/enrich-classpath "1.9.0"]]}]}
-
+                                   [eftest "0.5.9"]]}}
   :cljsbuild {:builds
               [{:source-paths ["src/patients/script"]
                 :jar true
-                :compiler
-                {:output-to "resources/public/js/app.js", :optimizations :advanced}
-                :builds nil}]}
+                :compiler {:main "patients.script.app"
+                           :output-dir "resources/public"
+                           :asset-path ""
+                           :output-to "resources/public/out/app.js"
+                           :optimizations :none
+                           :source-map true}}]};;"resources/public/js/app.js.map"}}]}
 
   :hooks [leiningen.cljsbuild])
