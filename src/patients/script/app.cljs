@@ -15,7 +15,10 @@
                        #(reset! timer (js/Date.)) 1000))
 
 (defn data-table []
-  [:table [[:tr [:th "ID"][:th "Name"][:th "Gender"][:th "Address"][:rh "OMS #"]]] (str @data)])
+  [(str @data)
+  [:table
+   [:thead [:tr [:th "ID"][:th "Name"][:th "Gender"][:th "Address"][:th "OMS #"]]]
+   [:tbody [:tr [:td (str @data)]]]]])
                 ;; (map #([:tr
                 ;;          [:td (str (:id %))]
                 ;;          [:td (:name %)]

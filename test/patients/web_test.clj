@@ -27,11 +27,10 @@
   (is (= "pong" ((http-req "get"    "/ping") :body)))
   (is (= "pong" ((http-req "post"   "/ping") :body)))
   (is (= "pong" ((http-req "put"    "/ping") :body)))
-  (is (= "pong" ((http-req "delete" "/ping") :body)))
-  (is (= (str (.length "pong")) ((:headers (http-req "head" "/ping")) "content-length"))))
+  (is (= "pong" ((http-req "delete" "/ping") :body))))
 
 (deftest test-static
-  (is (= "Application index!" ((http-get "/") :body))))
+  (is (= "text/html;charset=utf-8" (get-in (http-get "/") [:headers "content-type"]))))
 
 (deftest test-404
   (def url-404 (str "/" (first (generate-string-except ["" "ping" "db-info"]))))

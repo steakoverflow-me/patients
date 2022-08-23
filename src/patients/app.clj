@@ -35,7 +35,7 @@
 
 (defroutes api
   (GET    "/patients"                      {params :params} (db/list-filtered 'params))
-  (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one id))
+  (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
   (PUT    ["/patients/:id", :id #"[0-9]+"] [id request]     (do-validated db/update! (assoc (:body request) :id id)))
   (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (response (db/delete! id)))
@@ -50,4 +50,5 @@
 
 (defn -main []
   (if (not= db-structure (db/db-info)) (db/init-database) nil)
+  
   (run-jetty app {:port 8080 :join? true}))

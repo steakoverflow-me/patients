@@ -37,7 +37,7 @@
 
 ;; Непонятно, почему не передаётся first
 (defn get-one [id]
-  (j/query pg-uri [sql/get (Integer/parseInt id)]))
+  (first (j/query pg-uri [sql/get id])))
 
 (defn insert! [patient]
   (assert (nil? (:id patient)))

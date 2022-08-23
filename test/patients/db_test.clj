@@ -71,8 +71,43 @@
         new      (update old :name (constantly new-name))]
     (println new)
     (db/update! (dissoc new :gender))
+    (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 1)))]
+    (doseq [s strs]
+      (is (every? #(str/includes? (:name %) s) (db/list-filtered {:name s})))
+      (is (every? #(str/includes? (:address %) s) (db/list-filtered {:address s})))))
+
+  (let [strs1 (flatten (repeatedly 10 #(generate-string-except [""] 1)))
+        strs2 (flatten (repeatedly 10 #(generate-string-except [""] 1)))
+        strs (map vector strs1 strs2)]
+    (doseq [ss strs]
+      (is (every? #(and (str/includes? (:name %) (first ss))
+                        (str/includes? (:address %) (last ss)))
+                  (db/list-filtered {:name (first ss) :address (last ss)})))))
+
+  (let [dates1 (repeatedly 100 #(generate-local-date))
+        dates2 (repeatedly 100 #(generate-local-date))
+        dates (map vector dates1 dates2)]
+    (doseq [ds dates]
+      (is (every? #(and (>= (compare (:birthdate %) (jt/format (apply jt/min ds))) 0)
+                        (<= (compare (:birthdate %) (jt/format (apply jt/max ds))) 0))
+                  (db/list-filtered {:birthdate {:from (apply jt/min ds) :to (apply jt/max ds)}})))))
+
+  (let [id (+ 102 (rand-int 1000))]
+    (is (nil? (db/get-one id))))
+
+  (let [id       (inc (rand-int 101))
+        old      (db/get-one id)
+        new-name (first (generate-string-except [] 3))
+        new      (update old :name (constantly new-name))]
+    (println new)
+    (db/update! (dissoc new :gender))
     (is (= (db/get-one id) new)))
 
   (let [id (inc (rand-int 101))]
     (db/delete! id)
     (is (nil? (db/get-one id)))))
+
+  (let [id (inc (rand-int 101))]
+    (db/delete! id)
+    (is (nil? (db/get-one id)))))
+

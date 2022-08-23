@@ -80,11 +80,12 @@
                  :birthdate (jt/local-date "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
-        valid   {:name      (generate-string-of-length (inc (rand-int 128)))
+        valid   {:name      (generate-string-of-length (inc (rand-int 127)))
                  :gender-id (inc (rand-int 10))
                  :birthdate (generate-local-date)
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
                  :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
     (let [result (v/do-validated (fn [_] num) invalid)]
       (is (= 5 (count (:errors result)))))
+    (println valid)
     (is (= num (v/do-validated (fn [_] num) valid)))))
