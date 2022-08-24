@@ -51,17 +51,17 @@
   (j/delete! pg-uri :patients ["id = ?" id]))
 
 (defn list-filtered [filters]
-  (let [wheres (str (if (some? (:id filters)) (format "\nAND patients.id = %s" (:id filters)) "")
-                    (if (some? (:name filters)) (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)) "")
-                    (if (some? (:gender_id filters)) (format "\nAND patients.gender_id = %s" (:gender_id filters)) "")
-                    (if (and (some? (get-in filters [:birthdate :from]))
-                             (some? (get-in filters [:birthdate :to])))
+  (let [wheres (str (if (empty? (:id filters)) "" (format "\nAND patients.id = %s" (:id filters)))
+                    (if (empty? (:name filters)) "" (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)))
+                    (if (empty? (:gender_id filters)) "" (format "\nAND patients.gender_id = %s" (:gender_id filters)))
+                    (if (and (empty? (get-in filters [:birthdate :from]))
+                             (empty? (get-in filters [:birthdate :to])))
+                      ""
                       (format "\nAND patients.birthdate >= '%s' AND patients.birthdate <= '%s'"
                               (jt/format (get-in filters [:birthdate :from]))
-                              (jt/format (get-in filters [:birthdate :to])))
-                      "")
-                    (if (some? (:address filters)) (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)) "")
-                    (if (some? (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)) ""))]
+                              (jt/format (get-in filters [:birthdate :to]))))
+                    (if (empty? (:address filters)) "" (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)))
+                    (if (empty? (:oms filters)) "" (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters))))]
     (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
 
 

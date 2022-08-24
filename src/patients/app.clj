@@ -34,7 +34,7 @@
   (ANY "/ping" _ {:status 200 :headers {"content-type" "text/plain"} :body "pong"}))
 
 (defroutes api
-  (GET    "/patients"                      {params :params} (db/list-filtered 'params))
+  (GET    "/patients"                      {params :params} (db/list-filtered params))
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
   (PUT    ["/patients/:id", :id #"[0-9]+"] [id request]     (do-validated db/update! (assoc (:body request) :id id)))
