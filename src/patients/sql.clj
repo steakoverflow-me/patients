@@ -45,6 +45,17 @@ SELECT
     patients.oms AS oms
 FROM patients LEFT JOIN genders ON genders.id = patients.gender_id")
 
+(def search "
+SELECT
+    patients.id AS id,
+    patients.name AS name,
+    genders.name AS gender,
+    TO_CHAR(patients.birthdate, 'YYYY-MM-DD') AS birthdate,
+    patients.address AS address,
+    patients.oms AS oms
+FROM patients LEFT JOIN genders ON genders.id = patients.gender_id
+WHERE CONCAT(patients.name, '\\n', patients.birthdate, '\\n', patients.address, '\\n', patients.oms) LIKE '%?%';")
+
 (def get "
 SELECT
     patients.id AS id,
@@ -56,3 +67,5 @@ SELECT
     patients.oms AS oms
 FROM patients LEFT JOIN genders ON genders.id = patients.gender_id
 WHERE patients.id = ?;")
+
+(def genders "SELECT * FROM genders;")

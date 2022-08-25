@@ -54,14 +54,16 @@
   (let [wheres (str (if (empty? (:id filters)) "" (format "\nAND patients.id = %s" (:id filters)))
                     (if (empty? (:name filters)) "" (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)))
                     (if (empty? (:gender_id filters)) "" (format "\nAND patients.gender_id = %s" (:gender_id filters)))
-                    (if (and (empty? (get-in filters [:birthdate :from]))
-                             (empty? (get-in filters [:birthdate :to])))
-                      ""
-                      (format "\nAND patients.birthdate >= '%s' AND patients.birthdate <= '%s'"
-                              (jt/format (get-in filters [:birthdate :from]))
-                              (jt/format (get-in filters [:birthdate :to]))))
+
+                    (if (empty? (filters "birthdate[from]")) "" (format "\nAND patients.birthdate >= '%s'" (filters "birthdate[from]")))
+                    (if (empty? (filters "birthdate[to]")) "" (format "\nAND patients.birthdate <= '%s'" (filters "birthdate[to]")))
+
                     (if (empty? (:address filters)) "" (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)))
                     (if (empty? (:oms filters)) "" (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters))))]
     (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
 
+(defn list-search [str]
+  (j/query pg-uri sql/search))
 
+(defn get-genders []
+  (j/query pg-uri sql/genders))

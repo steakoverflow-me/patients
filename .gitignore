@@ -5,7 +5,11 @@ debug*
 .lein-failures
 .lein-repl-history
 
-resources/publi/js/*
+resources/public/**
+!resources/public/assets
+!resources/public/index.html
+
 target/
 node_modules/
 package-lock.json
+yarn.lock
