@@ -91,11 +91,17 @@
   (clear-search)
   (get-list))
 
+(defn on-click-patient-edit [id]
+  (println (str "Edit patient: " id)))
+
+(defn on-click-patient-delete [id]
+  (println (str "Delete patient: " id)))
+
 ;; Reagent components
 
 (defn button
   ([content on-click] (button content on-click ""))
-  ([content on-click alt] [:button.rounded.border-amber-700.border.bg-amber-500.text-white.font-bold.m-2.px-2.py-1 {:on-click on-click} content]))
+  ([content on-click alt] [:button.rounded.border-amber-700.border.bg-amber-500.text-white.font-bold.m-2.px-2.py-1 {:on-click on-click :title alt} content]))
 
 (defn data-table-header []
   [:thead.bg-blueamber-100
@@ -130,6 +136,11 @@
                                              (.preventDefault %))})]
     [:th.px-2 (button "⌫" on-click-clear-filters "Clear filters")]]])
 
+(defn data-table-actions-cell [id]
+  [:div.flex.justify-end
+   (button "➙" (partial on-click-patient-edit id) "Edit patient")
+   (button "⌫" (partial on-click-patient-delete id) "Delete patient")])
+
 (defn data-table []
   [:div.container.border-amber-700.border-2.rounded.p-2
    [:table.border-collapse
@@ -143,7 +154,7 @@
                    [:td.px-2 (row "birthdate")]
                    [:td.px-2 (row "address")]
                    [:td.px-2 (row "oms")]
-                   [:td.px-2]]))]]])
+                   [:td.px-2 (data-table-actions-cell (row "id"))]]))]]])
 
 (defn search-input []
   [:div.container.mx-auto.flex.justify-end.px-0.py-2
