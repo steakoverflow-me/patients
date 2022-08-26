@@ -1,6 +1,5 @@
 (ns patients.script.app
-  (:require [patients.script.api :as api]
-            [reagent.core :as r]
+  (:require [reagent.core :as r]
             [reagent.dom :as rdom]
             [re-com.core :refer [datepicker-dropdown]]
             ["react-dom/client" :refer [createRoot]]
@@ -17,20 +16,15 @@
 
 (defonce search (r/atom ""))
 
-(defonce filter-bd-from (r/atom nil))
+(defonce filter-birthdate-from (r/atom nil))
 
-(defonce filter-bd-to (r/atom nil))
+(defonce filter-birthdate-to (r/atom nil))
 
 (defonce filters-init {:name nil :gender_id nil :address nil :oms nil})
 
 (defonce filters (r/atom filters-init))
 
 ;; Misc functions
-
-(defn drop-filters []
-  (reset! filters filters-init)
-  (reset! filter-bd-from nil)
-  (reset! filter-bd-to nil))
 
 (defn is-numeric-or-special [e]
   (let [code  (.-keyCode e)
@@ -48,32 +42,54 @@
 (defn ts-to-date [timestamp]
   (coerce/from-long timestamp))
 
-(defn on-change-from [ts]
-  (reset! filter-bd-from (ts-to-date ts))
-  (api/get-list-filtered))
+(defn get-filters []
+  (-> (let [fs (assoc @filters :q @search)] (select-keys fs (for [[k v] fs :when (some? (not-empty v))] k)))
+      (cond-> (some? @filter-birthdate-from) (assoc-in [:birthdate :from] (.substring (coerce/to-string @filter-birthdate-from) 0 10)))
+      (cond-> (some? @filter-birthdate-to) (assoc-in [:birthdate :to] (.substring (coerce/to-string @filter-birthdate-to) 0 10)))))
 
-(defn on-change-to [ts]
-  (reset! filter-bd-to (ts-to-date ts))
-  (api/get-list-filtered @filters))
+(defn clear-filters []
+  (reset! filters filters-init)
+  (reset! filter-birthdate-from nil)
+  (reset! filter-birthdate-to nil))
+
+(defn clear-search []
+  (reset! search nil))
 
 ;; API functions
 
 (defn get-list
-  ([] (get-list {}))
-  ([filters] (GET "/patients" {:params filters
+  ([] (get-list (get-filters)))
+  ([fs] (GET "/patients" {:params fs
                                :handler #(reset! data %)})))
-
-(defn get-list-filtered []
-  (get-list (-> (select-keys @filters (for [[k v] @filters :when (some? v)] k))
-                (assoc-in [:birthdate :from] (if (some? @filter-bd-from) (.substring (coerce/to-string @filter-bd-from) 0 10) ""))
-                (assoc-in [:birthdate :to] (if (some? @filter-bd-to) (.substring (coerce/to-string @filter-bd-to) 0 10) "")))))
-
-(defn get-list-search [str]
-  (GET "/patients/search" {:params {:q str}
-                           :handler #(reset! data %)}))
 
 (defn get-genders []
   (GET "/genders" {:handler #(reset! genders %)}))
+
+;; Event handler functions
+
+(defn on-change-gender [gender-id]
+  (swap! filters assoc :gender_id gender-id)
+  (get-list))
+
+(defn on-change-birthdate-from [ts]
+  (reset! filter-birthdate-from (ts-to-date ts))
+  (get-list))
+
+(defn on-change-birthdate-to [ts]
+  (reset! filter-birthdate-to (ts-to-date ts))
+  (get-list))
+
+(defn on-change-search [q]
+  (reset! search q)
+  (get-list))
+
+(defn on-click-clear-filters []
+  (clear-filters)
+  (get-list))
+
+(defn on-click-clear-search []
+  (clear-search)
+  (get-list))
 
 ;; Reagent components
 
@@ -83,7 +99,8 @@
    [:tr
     [:th]
     [:th (filter-input :name {})]
-    [:th [:select {:on-change #((swap! filters assoc :gender_id  (-> % .-target .-value))(get-list-filtered))}
+    [:th [:select {:value (or (:gender_id @filters) "")
+                   :on-change #(on-change-gender (-> % .-target .-value))}
           [:option {:value ""} "---"]
           (not-empty (for [item @genders]
                        [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
@@ -93,19 +110,19 @@
                         :start-of-week 0
                         :placeholder   "Date from..."
                         :format        "yyyy-mm-dd"
-                        :model         filter-bd-from
-                        :on-change     on-change-from]] ;; why literal not works here?
+                        :model         filter-birthdate-from
+                        :on-change     on-change-birthdate-from]]
           [:li "To:" [datepicker-dropdown
                       :show-today?   true
                       :start-of-week 0
                       :placeholder   "Date to..."
                       :format        "yyyy-mm-dd"
-                      :model         filter-bd-to
-                      :on-change     on-change-to]]]] ;; ...and here!
+                      :model         filter-birthdate-to
+                      :on-change     on-change-birthdate-to]]]]
     [:th (filter-input :address {})]
     [:th (filter-input :oms {:on-key-down #(when (not (is-numeric-or-special %))
                                              (.preventDefault %))})]
-    [:th]]])
+    [:th [:button {:on-click on-click-clear-filters} "Clear filters"]]]])
 
 (defn data-table []
    [:table
@@ -121,15 +138,23 @@
                        [:td (row "oms")]
                        [:td]]))]])
 
+(defn search-input []
+  [:div
+   [:input.filter {:type "text"
+                   :value @search
+                   :on-change #(on-change-search  (-> % .-target .-value))}]
+   [:button {:on-click on-click-clear-search} "Clear search"]])
+
 (defn app []
   [:div
+   [search-input]
    [data-table]])
 
 (def root (createRoot (js/document.getElementById "app")))
 
-(defn ^:export run []
+(defn run []
   (.render root [(r/as-element (app))])
-  (get-list)
+  (get-list {})
   (get-genders))
 
 (run)

@@ -11,11 +11,6 @@
    [compojure.route :as route]
    [compojure.handler :as handler]))
 
-;;(defn page-index [request]
-;;  {:status 200
-;;   :headers {"content-type" "text/plain"}
-;;   :body "Application index!"})
-
 (defn page-404 [request]
   {:status 404
    :headers {"content-type" "text/plain"}
@@ -35,7 +30,6 @@
 
 (defroutes api
   (GET    "/patients"                      {params :params} (db/list-filtered params))
-  (GET    "/patients/search"               {params :params} (db/list-search (:q params)))
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
   (PUT    ["/patients/:id", :id #"[0-9]+"] [id request]     (do-validated db/update! (assoc (:body request) :id id)))

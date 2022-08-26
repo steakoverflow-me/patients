@@ -35,7 +35,6 @@
                                      bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
                                  (jt/local-date bd)))))
 
-;; Непонятно, почему не передаётся first
 (defn get-one [id]
   (first (j/query pg-uri [sql/get id])))
 
@@ -51,19 +50,17 @@
   (j/delete! pg-uri :patients ["id = ?" id]))
 
 (defn list-filtered [filters]
-  (let [wheres (str (if (empty? (:id filters)) "" (format "\nAND patients.id = %s" (:id filters)))
-                    (if (empty? (:name filters)) "" (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)))
-                    (if (empty? (:gender_id filters)) "" (format "\nAND patients.gender_id = %s" (:gender_id filters)))
+  (let [wheres (str (when (not-empty (:id filters)) (format "\nAND patients.id = %s" (:id filters)))
+                    (when (not-empty (:name filters)) (format "\nAND patients.name LIKE '%%%s%%'" (:name filters)))
+                    (when (not-empty (:gender_id filters)) (format "\nAND patients.gender_id = %s" (:gender_id filters)))
 
-                    (if (empty? (filters "birthdate[from]")) "" (format "\nAND patients.birthdate >= '%s'" (filters "birthdate[from]")))
-                    (if (empty? (filters "birthdate[to]")) "" (format "\nAND patients.birthdate <= '%s'" (filters "birthdate[to]")))
+                    (when (not-empty (filters "birthdate[from]")) (format "\nAND patients.birthdate >= '%s'" (filters "birthdate[from]")))
+                    (when (not-empty (filters "birthdate[to]")) (format "\nAND patients.birthdate <= '%s'" (filters "birthdate[to]")))
 
-                    (if (empty? (:address filters)) "" (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)))
-                    (if (empty? (:oms filters)) "" (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters))))]
+                    (when (not-empty (:address filters)) (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)))
+                    (when (not-empty (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)))
+                    (when (not-empty (:q filters)) (format "\nAND CONCAT(patients.name, '\\n', patients.birthdate, '\\n', patients.address, '\\n', patients.oms) LIKE '%%%s%%'" (:q filters))))]
     (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
-
-(defn list-search [str]
-  (j/query pg-uri sql/search))
 
 (defn get-genders []
   (j/query pg-uri sql/genders))
