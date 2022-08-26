@@ -93,60 +93,68 @@
 
 ;; Reagent components
 
+(defn button
+  ([content on-click] (button content on-click ""))
+  ([content on-click alt] [:button.rounded.border-amber-700.border.bg-amber-500.text-white.font-bold.m-2.px-2.py-1 {:on-click on-click} content]))
+
 (defn data-table-header []
-  [:thead
-   [:tr [:th "ID"][:th "Name"][:th "Gender"][:th "Birthdate"][:th "Address"][:th "OMS #"][:th]]
-   [:tr
-    [:th]
-    [:th (filter-input :name {})]
-    [:th [:select {:value (or (:gender_id @filters) "")
+  [:thead.bg-blueamber-100
+   [:tr.py-2.border-b.border-amber-500 [:th.px-2 "ID"][:th.px-2 "Name"][:th.px-2 "Gender"][:th.px-2 "Birthdate"][:th.px-2 "Address"][:th.px-2 "OMS #"][:th.px-2]]
+   [:tr.py-2.border-b-2.border-amber-700
+    [:th.px-2]
+    [:th.px-2 (filter-input :name {})]
+    [:th.px-2 [:select.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
                    :on-change #(on-change-gender (-> % .-target .-value))}
           [:option {:value ""} "---"]
           (not-empty (for [item @genders]
                        [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
-    [:th [:ul
-          [:li "From:" [datepicker-dropdown
-                        :show-today?   true
-                        :start-of-week 0
-                        :placeholder   "Date from..."
-                        :format        "yyyy-mm-dd"
-                        :model         filter-birthdate-from
-                        :on-change     on-change-birthdate-from]]
-          [:li "To:" [datepicker-dropdown
-                      :show-today?   true
-                      :start-of-week 0
-                      :placeholder   "Date to..."
-                      :format        "yyyy-mm-dd"
-                      :model         filter-birthdate-to
-                      :on-change     on-change-birthdate-to]]]]
-    [:th (filter-input :address {})]
-    [:th (filter-input :oms {:on-key-down #(when (not (is-numeric-or-special %))
+    [:th.px-2 [:div.flex.flex-col.justify-center
+               [:div.my-1.border-amber-700.border-2.rounded-md
+                [datepicker-dropdown
+                 :show-today?   true
+                 :start-of-week 0
+                 :placeholder   "Date from..."
+                 :format        "yyyy-mm-dd"
+                 :model         filter-birthdate-from
+                 :on-change     on-change-birthdate-from]]
+               [:div.mb-1.border-amber-700.border-2.rounded-md
+                [datepicker-dropdown
+                 :show-today?   true
+                 :start-of-week 0
+                 :placeholder   "Date to..."
+                 :format        "yyyy-mm-dd"
+                 :model         filter-birthdate-to
+                 :on-change     on-change-birthdate-to]]]]
+    [:th.px-2 (filter-input :address {})]
+    [:th.px-2 (filter-input :oms {:on-key-down #(when (not (is-numeric-or-special %))
                                              (.preventDefault %))})]
-    [:th [:button {:on-click on-click-clear-filters} "Clear filters"]]]])
+    [:th.px-2 (button "⌫" on-click-clear-filters "Clear filters")]]])
 
 (defn data-table []
-   [:table
+  [:div.container.border-amber-700.border-2.rounded.p-2
+   [:table.border-collapse
     [data-table-header]
     [:tbody
      (not-empty (for [row @data]
-                      [:tr {:key (str "row-id-" (row "id"))}
-                       [:td (str (row "id"))]
-                       [:td (row "name")]
-                       [:td (row "gender")]
-                       [:td (row "birthdate")]
-                       [:td (row "address")]
-                       [:td (row "oms")]
-                       [:td]]))]])
+                  [:tr.py-2.border-b.border-amber-500.last-child:border-0 {:key (str "row-id-" (row "id"))}
+                   [:td.px-2 (str (row "id"))]
+                   [:td.px-2 (row "name")]
+                   [:td.px-2 (row "gender")]
+                   [:td.px-2 (row "birthdate")]
+                   [:td.px-2 (row "address")]
+                   [:td.px-2 (row "oms")]
+                   [:td.px-2]]))]]])
 
 (defn search-input []
-  [:div
-   [:input.filter {:type "text"
-                   :value @search
-                   :on-change #(on-change-search  (-> % .-target .-value))}]
-   [:button {:on-click on-click-clear-search} "Clear search"]])
+  [:div.container.mx-auto.flex.justify-end.px-0.py-2
+   [:input.border-amber-700.border-2.rounded.px-2 {:type "text"
+                                                   :placeholder "Search..."
+                                                   :value @search
+                                                   :on-change #(on-change-search  (-> % .-target .-value))}]
+   (button "⌫" on-click-clear-search "Clear search")])
 
 (defn app []
-  [:div
+  [:div.container.mx-auto.p-4
    [search-input]
    [data-table]])
 

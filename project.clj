@@ -17,7 +17,6 @@
                  [cljsjs/react "18.2.0-0"]
                  [cljsjs/react-dom "18.2.0-0"]
                  [cljs-ajax "0.7.5"]
-                 [com.fasterxml.jackson.core/jackson-core "2.13.3"]
 
                  [ring/ring-core "1.9.5"]
                  [ring/ring-jetty-adapter "1.9.5"]
@@ -50,6 +49,6 @@
                            :asset-path ""
                            :output-to "resources/public/out/app.js"
                            :optimizations :none
-                           :source-map true}}]};;"resources/public/js/app.js.map"}}]}
+                           :source-map true}}]}
 
   :hooks [leiningen.cljsbuild])
