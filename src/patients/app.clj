@@ -33,7 +33,7 @@
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
   (PUT    ["/patients/:id", :id #"[0-9]+"] [id request]     (do-validated db/update! (assoc (:body request) :id id)))
-  (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! id))
+  (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! (Integer/parseInt id)))
 
   (GET "/genders" [] (db/get-genders))
 

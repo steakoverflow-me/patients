@@ -1,7 +1,7 @@
 (ns patients.common-test
   (:require [clojure.test :as t]
             [clojure.test.check.generators :as gen]
-            [java-time :refer [local-date]]))
+            [cljc.java-time.local-date :as ld]))
 
 (defn generate-string-except
   ([exceptions] (generate-string-except exceptions 0 10))
@@ -27,5 +27,5 @@
             m-str (if (< month 10) (str "0" month) (str month))
             day   (inc (rand-int 28))
             d-str (if (< day 10) (str "0" day) (str day))]
-        (local-date (str y-str "-" m-str "-" d-str)))))
+        (ld/parse (str y-str "-" m-str "-" d-str)))))
 

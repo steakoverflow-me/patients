@@ -6,7 +6,7 @@
    [clojure.data.json :as json]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [java-time :as jt]
+   [cljc.java-time.local-date :as ld]
    [patients.fixtures :refer [with-db]]
    [clojure.test :refer [deftest use-fixtures is]]
    [clojure.test.check.generators :as gen]
@@ -26,7 +26,7 @@
   (let [address "214032, Smolensk, Marshal Eremenko str., 10-88"
         patient-in  {:name "Sasha"
                      :gender_id 1
-                     :birthdate (jt/local-date "1985-08-27")
+                     :birthdate (ld/parse "1985-08-27")
                      :address address
                      :oms "0123456789"}
         patient-out {:id 1
@@ -61,7 +61,7 @@
         dates2 (repeatedly 100 #(generate-local-date))
         dates (map vector dates1 dates2)]
     (doseq [ds dates]
-      (let [dmin (jt/format (apply jt/min ds)) dmax (jt/format (apply jt/max ds))]
+      (let [[dmin dmax] (map ld/to-string (if (< (apply ld/compare-to ds) 0) [(first ds)(second ds)] [(second ds)(first ds)]))]
         (is (every? #(and (>= (compare (:birthdate %) dmin) 0)
                           (<= (compare (:birthdate %) dmax) 0))
                     (db/list-filtered {"birthdate[from]" dmin "birthdate[to]" dmax}))))))

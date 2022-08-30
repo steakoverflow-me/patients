@@ -1,7 +1,7 @@
 (ns patients.db
   (:require [clojure.java.jdbc :as j]
             [clojure.tools.logging :as log]
-            [java-time :as jt]
+            [cljc.java-time.local-date :as ld]
             [patients.sql :as sql]
             [patients.config :as cfg]))
 
@@ -27,16 +27,14 @@
                                            [:address   :text "NOT NULL"]
                                            ["FOREIGN KEY(gender_id) REFERENCES genders(id)"]]))))
 
-;; Решено не использовать записи, потому что разные поля могут быть (id? и gender/gender_id)
-
 (defn convert-birthdate-to-local-date [patient]
   (update patient :birthdate (fn [bd-in]
                                (let [bd-in (patient :birthdate)
                                      bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
-                                 (jt/local-date bd)))))
+                                 (ld/parse bd)))))
 
 (defn get-one [id]
-  (first (j/query pg-uri [sql/get id])))
+  (j/query pg-uri [sql/get id]))
 
 (defn insert! [patient]
   (assert (nil? (:id patient)))
@@ -44,7 +42,7 @@
 
 (defn update! [patient]
   (assert (some? (:id patient)))
-  (j/update! pg-uri :patients (update patient :birthdate jt/local-date) ["id = ?" (:id patient)]))
+  (j/update! pg-uri :patients (update patient :birthdate ld/parse) ["id = ?" (:id patient)]))
 
 (defn delete! [id]
   (j/delete! pg-uri :patients ["id = ?" id]))
@@ -59,7 +57,8 @@
 
                     (when (not-empty (:address filters)) (format "\nAND patients.address LIKE '%%%s%%'" (:address filters)))
                     (when (not-empty (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)))
-                    (when (not-empty (:q filters)) (format "\nAND CONCAT(patients.name, '\\n', patients.birthdate, '\\n', patients.address, '\\n', patients.oms) LIKE '%%%s%%'" (:q filters))))]
+                    (when (not-empty (:q filters)) (format "\nAND CONCAT(patients.name, '\\n', patients.birthdate, '\\n', patients.address, '\\n', patients.oms, '\\n', CONCAT_WS('-', SUBSTRING(patients.oms, 1, 3), SUBSTRING(patients.oms, 4, 3), SUBSTRING(patients.oms, 7, 3), SUBSTRING(patients.oms, 10, 1))) LIKE '%%%s%%'" (:q filters))))]
+
     (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
 
 (defn get-genders []

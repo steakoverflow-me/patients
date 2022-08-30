@@ -13,6 +13,7 @@
 
                  [org.clojure/clojurescript "1.11.60"]
                  [reagent "1.1.1"]
+                 [org.clojars.frozenlock/reagent-modals "0.2.8"]
                  [re-com "2.13.2"]
                  [cljsjs/react "18.2.0-0"]
                  [cljsjs/react-dom "18.2.0-0"]
@@ -28,8 +29,8 @@
                  [org.clojure/java.jdbc "0.7.12"]
                  [org.postgresql/postgresql "42.4.1"]
 
-                 [clojure.java-time "0.3.3"]
-                 [com.andrewmcveigh/cljs-time "0.5.2"]]
+                 [com.andrewmcveigh/cljs-time "0.5.2"]
+                 [com.widdindustries/cljc.java-time "0.1.21"]]
 
   :main patients.app
 

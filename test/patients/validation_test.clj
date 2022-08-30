@@ -1,6 +1,6 @@
 (ns patients.validation-test
   (:require [patients.validation :as v]
-            [java-time :as jt]
+            [cljc.java-time.local-date :as ld]
             [clojure.test :refer [deftest is]]
             [clojure.test.check.generators :as gen]
             [patients.common-test :refer [generate-string-of-length
@@ -62,7 +62,7 @@
 (deftest validate-test
   (let [invalid {:name      (generate-special-string-of-length 1)
                  :gender-id -1
-                 :birthdate (jt/local-date "2050-01-01")
+                 :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
         valid   {:name      (generate-string-of-length (inc (rand-int 128)))
@@ -77,7 +77,7 @@
   (let [num     (rand-int 100)
         invalid {:name      (generate-special-string-of-length 1)
                  :gender-id -1
-                 :birthdate (jt/local-date "2050-01-01")
+                 :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
         valid   {:name      (generate-string-of-length (inc (rand-int 127)))

@@ -1,5 +1,5 @@
 (ns patients.validation
-  (:require [java-time :as jt]))
+  (:require [cljc.java-time.local-date :as ld]))
 
 (defn validate-name [name]
   (if (nil? (re-matches #"^[\pL\pN\s-_]{2,128}$" name)) "Name should contain from 2 to 128 alphanumeric symbols, spaces, underscores or hyphens" nil))
@@ -8,7 +8,7 @@
   (if (or (not (integer? gender-id)) (not (pos? gender-id))) "Wrong gender ID" nil))
 
 (defn validate-birthdate [birthdate]
-  (if (jt/after? birthdate (jt/local-date)) "Birthdate can't be in the future" nil))
+  (if (ld/is-after birthdate (ld/now)) "Birthdate can't be in the future" nil))
 
 (defn validate-address [address]
   (if (empty? address) "Address can't be empty" nil))

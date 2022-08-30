@@ -1,12 +1,16 @@
 (ns patients.script.app
-  (:require [reagent.core :as r]
+  (:require [patients.validation :as v]
+            [reagent.core :as r]
             [reagent.dom :as rdom]
+            [reagent-modals.modals :as rmodals]
             [re-com.core :refer [datepicker-dropdown]]
             ["react-dom/client" :refer [createRoot]]
+            [cljc.java-time.local-date :as ld]
             [cljs-time.coerce :as coerce]
             [clojure.string :as str]
-            [ajax.core :refer [GET POST DELETE]])
-  (:require-macros [patients.script.macros :refer [filter-input]]))
+            [goog.string :as gstring]
+            [ajax.core :refer [GET POST PUT DELETE]])
+  (:require-macros [patients.script.macros :refer [filter-input form-input]]))
 
 ;; State
 
@@ -60,14 +64,37 @@
 (defn get-list
   ([] (get-list (get-filters)))
   ([fs] (GET "/patients" {:params fs
-                               :handler #(reset! data %)})))
+                          :handler #(reset! data %)
+                          :error-handler error-handler})))
+(defn get-one [id f]
+  (GET (str "/patients/" id) {:handler #(f (first %))
+                              :error-handler error-handler}))
 
 (defn get-genders []
-  (GET "/genders" {:handler #(reset! genders %)}))
+  (GET "/genders" {:handler #(reset! genders %)
+                   :error-handler error-handler}))
+
+(defn create-patient [patient f]
+  (POST "/patients" {:params patient
+                     :handler f
+                     :error-handler error-handler}))
+
+(defn update-patient [patient f]
+  (PUT (str "/patients/" (:id patient)) {:params patient
+                                         :handler f
+                                         :error-handler error-handler}))
+
+(defn delete-patient [id f]
+  (DELETE (str "/patients/" id) {:handler f
+                                 :error-handler error-handler}))
 
 ;; Event handler functions
 
-(defn on-change-gender [gender-id]
+(defn error-handler [e]
+  (println "error-handler" e)
+  (rmodals/modal! (notification (gstring/unescapeEntities (:status-text e)) (gstring/unescapeEntities ((:response e) "message")))))
+
+(defn on-change-gender-filter [gender-id]
   (swap! filters assoc :gender_id gender-id)
   (get-list))
 
@@ -92,16 +119,24 @@
   (get-list))
 
 (defn on-click-patient-edit [id]
-  (println (str "Edit patient: " id)))
+  (get-one id #((reset! patient {:id (p "id")
+                                 :name (p "name")
+                                 :gender_id (p "gender_id")
+                                 :birthdate (coerce/from-string (p "birthdate"))
+                                 :address (p "address")
+                                 :oms (p "oms")})
+                (rmodals/modal! (patient-edit-dialog %)))))
 
 (defn on-click-patient-delete [id]
-  (println (str "Delete patient: " id)))
+  (rmodals/modal! (patient-delete-confirmation id)))
 
 ;; Reagent components
 
+(def input :input.border-amber-700.border-2.rounded.px-2)
+
 (defn button
-  ([content on-click] (button content on-click ""))
-  ([content on-click alt] [:button.rounded.border-amber-700.border.bg-amber-500.text-white.font-bold.m-2.px-2.py-1 {:on-click on-click :title alt} content]))
+  ([content on-click] (button content on-click {}))
+  ([content on-click props] [:button.rounded.border-amber-700.border.bg-amber-500.text-white.font-bold.m-2.px-2.py-1 (merge {:type "button" :on-click on-click} props) content]))
 
 (defn data-table-header []
   [:thead.bg-blueamber-100
@@ -110,10 +145,10 @@
     [:th.px-2]
     [:th.px-2 (filter-input :name {})]
     [:th.px-2 [:select.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
-                   :on-change #(on-change-gender (-> % .-target .-value))}
-          [:option {:value ""} "---"]
-          (not-empty (for [item @genders]
-                       [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
+                                                          :on-change #(on-change-gender-filter (-> % .-target .-value))}
+               [:option {:value ""} "---"]
+               (not-empty (for [item @genders]
+                            [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
     [:th.px-2 [:div.flex.flex-col.justify-center
                [:div.my-1.border-amber-700.border-2.rounded-md
                 [datepicker-dropdown
@@ -134,12 +169,85 @@
     [:th.px-2 (filter-input :address {})]
     [:th.px-2 (filter-input :oms {:on-key-down #(when (not (is-numeric-or-special %))
                                              (.preventDefault %))})]
-    [:th.px-2 (button "⌫" on-click-clear-filters "Clear filters")]]])
+    [:th.px-2
+     [:div.flex.justify-end
+      (button "⌫" on-click-clear-filters {:title "Clear filters"})]]]])
+
+(defn notification [header content]
+  [:div.flex.flex-col.justify-between
+   [:div.flex.justify-center.bg-amber-500.p-2.rounded-t.text-white.text-lg.font-bold header]
+   [:div.container.p-4
+    [:div.pb-4.flex.justify-center content]
+    [:hr]
+    [:div.flex.justify-end.pt-2
+     (button "Ok" #(do) {:data-dismiss "modal"})]]])
+
+(defn patient-delete-confirmation [id]
+  [:div.flex.flex-col.justify-between
+   [:div.flex.justify-center.bg-amber-500.p-2.rounded-t.text-white.text-lg.font-bold "Delete"]
+   [:div.container.p-4
+    [:div.pb-4.flex.justify-center
+     [:dev.text-2xl.font-bold (gstring/format "Delete patient #%s?" id)]]
+    [:hr]
+    [:div.flex.justify-end.pt-2
+     (button "Delete" #(delete-patient id get-list) {:data-dismiss "modal"})
+     (button "Cancel" #(do) {:data-dismiss "modal"
+                             :class "bg-white text-amber-600"})]]])
+
+(defn patient-edit-dialog [p]
+  (let [patient  (r/atom p)
+        errors   (r/atom {:id nil :name nil :birthdate nil :gender_id nil :address nil :oms nil})
+        validate (let [es {:name       (v/validate-name (:name @patient))
+                           :gender_id  (v/validate-gender-id (:gender_id @patient))
+                           :birthdate  (v/validate-birthdate (ld/parse (.substring (coerce/to-string (:birthdate @patient)) 0 10)))
+                           :address   (v/validate-address (:address @patient))
+                           :oms       (v/validate-oms (:oms @patient))}]
+                   (reset! errors es))]
+
+    [:div.flex.flex-col.justify-between
+     [:div.flex.justify-center.bg-amber-500.p-2.rounded-t.text-white.text-lg.font-bold
+      (if (some? (:id @patient)) (str "Edit patient #" (:id @patient)) "New patient")]
+     [:div.container.p-4.flex.flex-col.justify-between
+      (form-input :name {:placeholder "Name..."})
+      [:div.flex.justify-between.p-3
+       [:div.flex.justify-center
+        [:div.flex.flex-col.justify-center.font-bold "Gender:"]
+        [:select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
+                                                        :on-change #((swap! patient assoc :gender_id (-> % .-target .-value))(validate))}
+         [:option {:value ""} "---"]
+         (not-empty (for [item @genders]
+                      [:option {:key (str "gender-id-" (item "id"))
+                                :value (item "id")}
+                       (item "name")]))]]
+       [datepicker-dropdown
+        :show-today?   true
+        :start-of-week 0
+        :placeholder   "Birthdate..."
+        :format        "yyyy-mm-dd"
+        :model         (:birthdate @patient)
+        :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]
+      (form-input :address {:placeholder "Address..."})
+      (form-input :oms {:placeholder "OMS #"
+                        :on-key-down #(when (not (is-numeric-or-special %))
+                                        (.preventDefault %))})]
+     [:hr]
+     [:div.flex.justify-end.pt-2
+      (button "Save"
+              #(if (some? (:id @patient))
+                 (update-patient @patient callback)
+                 (create-patient @patient callback))
+              {:data-dismiss "modal"
+               :disabled (not-every? nil? (vals @errors))
+               :class (when (not-every? nil? (vals @errors)) "bg-amber-200")})
+      (button "Cancel"
+              (fn [] (clear-patient)(clear-patient-errors))
+              {:data-dismiss "modal"
+               :class "bg-white text-amber-600"})]]]))
 
 (defn data-table-actions-cell [id]
   [:div.flex.justify-end
-   (button "➙" (partial on-click-patient-edit id) "Edit patient")
-   (button "⌫" (partial on-click-patient-delete id) "Delete patient")])
+   (button "➙" #(on-click-patient-edit id) {:title "Edit patient"})
+   (button "⌫" #(on-click-patient-delete id) {:title "Delete patient"})])
 
 (defn data-table []
   [:div.container.border-amber-700.border-2.rounded.p-2
@@ -148,12 +256,12 @@
     [:tbody
      (not-empty (for [row @data]
                   [:tr.py-2.border-b.border-amber-500.last-child:border-0 {:key (str "row-id-" (row "id"))}
-                   [:td.px-2 (str (row "id"))]
-                   [:td.px-2 (row "name")]
-                   [:td.px-2 (row "gender")]
-                   [:td.px-2 (row "birthdate")]
-                   [:td.px-2 (row "address")]
-                   [:td.px-2 (row "oms")]
+                   [:td.px-2 [:div.flex.justify-end (str (row "id"))]]
+                   [:td.px-2 [:div.flex.justify-start (row "name")]]
+                   [:td.px-2 [:div.flex.justify-start (row "gender")]]
+                   [:td.px-2 [:div.flex.justify-end (row "birthdate")]]
+                   [:td.px-2 [:div.flex.justify-start (row "address")]]
+                   [:td.px-2 [:div.flex.justify-end (str/join "-" (re-seq #"\d{1,3}" (str (row "oms"))))]]
                    [:td.px-2 (data-table-actions-cell (row "id"))]]))]]])
 
 (defn search-input []
@@ -162,12 +270,13 @@
                                                    :placeholder "Search..."
                                                    :value @search
                                                    :on-change #(on-change-search  (-> % .-target .-value))}]
-   (button "⌫" on-click-clear-search "Clear search")])
+   (button "⌫" on-click-clear-search {:title "Clear search"})])
 
 (defn app []
   [:div.container.mx-auto.p-4
    [search-input]
-   [data-table]])
+   [data-table]
+   [rmodals/modal-window]])
 
 (def root (createRoot (js/document.getElementById "app")))
 
