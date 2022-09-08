@@ -1,15 +1,16 @@
 (ns patients.script.app
-  (:require [patients.validation :as v]
-            [reagent.core :as r]
-            [reagent.dom :as rdom]
-            [reagent-modals.modals :as rmodals]
-            [re-com.core :refer [datepicker-dropdown]]
-            ["react-dom/client" :refer [createRoot]]
-            [cljc.java-time.local-date :as ld]
-            [cljs-time.coerce :as coerce]
-            [clojure.string :as str]
-            [goog.string :as gstring]
-            [ajax.core :refer [GET POST PUT DELETE json-request-format]])
+  (:require
+   [patients.validation :as v]
+   [reagent.core :as r]
+   [reagent.dom :as rdom]
+   [reagent-modals.modals :as rmodals]
+   [re-com.core :refer [datepicker-dropdown]]
+   ["react-dom/client" :refer [createRoot]]
+   [cljc.java-time.local-date :as ld]
+   [cljs-time.coerce :as coerce]
+   [clojure.string :as str]
+   [goog.string :as gstring]
+   [ajax.core :refer [GET POST PUT DELETE json-request-format]])
   (:require-macros [patients.script.macros :refer [filter-input form-input]]))
 
 ;; State
@@ -51,6 +52,9 @@
         (and (< 34 code) (> 40 code))
         (= 46 code))))
 
+(defn ld-to-iso-str [ld]
+  (.substring (ld/to-string ld) 0 8))
+
 (defn ts-to-date [timestamp]
   (coerce/from-long timestamp))
 
@@ -83,17 +87,18 @@
                    :error-handler error-handler}))
 
 (defn create-patient [p f]
-  (POST "/patients" {:params p
-                     :format (json-request-format)
-                     :handler f
-                     :error-handler error-handler}))
+  (let [bd-str (ld-to-iso-str (:birthdate p))]
+    (POST "/patients" {:params (assoc p :birthdate bd-str)
+                       :format (json-request-format)
+                       :handler f
+                       :error-handler error-handler})))
 
 (defn update-patient [p f]
-  (println p)
-  (PUT (str "/patients/" (:id p)) {:params (assoc p :birthdate (ld/to-string (:birthdate p)))
-                                   :format (json-request-format)
-                                   :handler f
-                                   :error-handler error-handler}))
+  (let [bd-str (ld-to-iso-str (:birthdate p))]
+    (PUT (str "/patients/" (:id p)) {:params (assoc p :birthdate bd-str)
+                                     :format (json-request-format)
+                                     :handler f
+                                     :error-handler error-handler})))
 
 (defn delete-patient [id f]
   (DELETE (str "/patients/" id) {:handler f

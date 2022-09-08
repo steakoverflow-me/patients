@@ -29,5 +29,5 @@
 (defn do-validated [f patient]
   (let [result (validate patient)]
     (if (empty? result)
-      (f patient)
+      ((f patient) {:status 200 :text "OK"})
       {:errors result})))

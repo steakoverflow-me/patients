@@ -42,7 +42,7 @@
 
 (defn update! [patient]
   (assert (some? (:id patient)))
-  (j/update! pg-uri :patients (update patient :birthdate ld/parse) ["id = ?" (:id patient)]))
+  (j/update! pg-uri :patients patient ["id = ?" (:id patient)]))
 
 (defn delete! [id]
   (j/delete! pg-uri :patients ["id = ?" id]))
