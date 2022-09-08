@@ -3,9 +3,10 @@
    [patients.db :as db]
    [patients.config :refer [db-structure]]
    [patients.validation :refer [do-validated]]
+   [clojure.data.json :as json]
    [ring.adapter.jetty :refer [run-jetty]]
    [ring.middleware.defaults :refer [api-defaults wrap-defaults]]
-   [ring.middleware.json :refer [wrap-json-response]]
+   [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
    [ring.util.response :refer [response resource-response header]]
    [compojure.core :refer [GET POST PUT DELETE ANY defroutes routes]]
    [compojure.route :as route]
@@ -32,7 +33,7 @@
   (GET    "/patients"                      {params :params} (db/list-filtered params))
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
-  (PUT    ["/patients/:id", :id #"[0-9]+"] [id request]     (do-validated db/update! (assoc (:body request) :id id)))
+  (PUT    ["/patients/:id", :id #"[0-9]+"] {params :params body :body} (do-validated db/update! (assoc body :id id)))
   (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! (Integer/parseInt id)))
 
   (GET "/genders" [] (db/get-genders))
@@ -43,8 +44,17 @@
   (fn [req] (assoc-in (h req) [:headers "Content-Type"] "application/json")))
 
 (def app
-  (routes static (wrap-content-json (wrap-json-response (wrap-defaults api api-defaults)))))
+  (routes static (wrap-content-json (wrap-json-body (wrap-json-response (wrap-defaults api api-defaults))))))
+
+(def dataset-list
+  (map
+   (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
+         db/convert-birthdate-to-local-date)
+   (:objects (json/read-json (slurp "dev/dataset.json")))))
 
 (defn -main []
   (if (not= db-structure (db/db-info)) (db/init-database) nil)
+
+  ;;(doseq [patient dataset-list] (db/insert! patient))
+
   (run-jetty app {:port 8080 :join? true}))

@@ -36,13 +36,13 @@
                      :address address
                      :oms "0123456789"}]
     (db/insert! patient-in)
-    (is (= (dissoc (db/get-one 1) :gender) patient-out)))
+    (is (= (dissoc (first (db/get-one 1)) :gender) patient-out)))
 
   (doseq [patient dataset-list] (db/insert! patient))
   (is (= 101 (-> (j/query db/pg-uri ["SELECT COUNT(*) FROM patients;"]) first :count)))
 
   (let [id (+ 102 (rand-int 1000))]
-    (is (nil? (db/get-one id))))
+    (is (nil? (first (db/get-one id)))))
 
   (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 1)))]
     (doseq [s strs]
@@ -71,20 +71,20 @@
       (is (every? #(str/includes? (str/join "\n" [(:name %) (:birthdate %) (:address %) (:oms %)]) s) (db/list-filtered {:q s})))))
 
   (let [id (+ 102 (rand-int 1000))]
-    (is (nil? (db/get-one id))))
+    (is (nil? (first (db/get-one id)))))
 
   (let [id       (inc (rand-int 101))
-        old      (db/get-one id)
+        old      (first (db/get-one id))
         new-name (first (generate-string-except [] 3))
         new      (update old :name (constantly new-name))]
     (db/update! (dissoc new :gender))
-    (is (= (db/get-one id) new)))
+    (is (= (first (db/get-one id)) new)))
 
   (let [id (inc (rand-int 101))]
     (db/delete! id)
-    (is (nil? (db/get-one id))))
+    (is (nil? (first (db/get-one id)))))
 
   (let [id (inc (rand-int 101))]
     (db/delete! id)
-    (is (nil? (db/get-one id)))))
+    (is (nil? (first (db/get-one id))))))
 

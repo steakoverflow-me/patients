@@ -9,7 +9,7 @@
             [cljs-time.coerce :as coerce]
             [clojure.string :as str]
             [goog.string :as gstring]
-            [ajax.core :refer [GET POST PUT DELETE]])
+            [ajax.core :refer [GET POST PUT DELETE json-request-format]])
   (:require-macros [patients.script.macros :refer [filter-input form-input]]))
 
 ;; State
@@ -27,6 +27,14 @@
 (defonce filters-init {:name nil :gender_id nil :address nil :oms nil})
 
 (defonce filters (r/atom filters-init))
+
+(defonce patient-init {:name nil :gender_id nil :birthdate nil :address nil :oms nil})
+
+(defonce patient (r/atom patient-init))
+
+(defonce errors (r/atom patient-init))
+
+(defonce is-edit (r/atom false))
 
 ;; Misc functions
 
@@ -74,25 +82,38 @@
   (GET "/genders" {:handler #(reset! genders %)
                    :error-handler error-handler}))
 
-(defn create-patient [patient f]
-  (POST "/patients" {:params patient
+(defn create-patient [p f]
+  (POST "/patients" {:params p
+                     :format (json-request-format)
                      :handler f
                      :error-handler error-handler}))
 
-(defn update-patient [patient f]
-  (PUT (str "/patients/" (:id patient)) {:params patient
-                                         :handler f
-                                         :error-handler error-handler}))
+(defn update-patient [p f]
+  (println p)
+  (PUT (str "/patients/" (:id p)) {:params (assoc p :birthdate (ld/to-string (:birthdate p)))
+                                   :format (json-request-format)
+                                   :handler f
+                                   :error-handler error-handler}))
 
 (defn delete-patient [id f]
   (DELETE (str "/patients/" id) {:handler f
                                  :error-handler error-handler}))
 
+;; Validation
+
+(defn validate []
+  (let [es {:name      (v/validate-name (:name @patient))
+            :gender_id (v/validate-gender-id (:gender_id @patient))
+            :birthdate (v/validate-birthdate (ld/parse (.substring (coerce/to-string (:birthdate @patient)) 0 10)))
+            :address   (v/validate-address (:address @patient))
+            :oms       (v/validate-oms (:oms @patient))}]
+    (reset! errors es)))
+
 ;; Event handler functions
 
 (defn error-handler [e]
   (println "error-handler" e)
-  (rmodals/modal! (notification (gstring/unescapeEntities (:status-text e)) (gstring/unescapeEntities ((:response e) "message")))))
+  (rmodals/modal! (notification (gstring/unescapeEntities (or (:status-text e) "")) (gstring/unescapeEntities (or (get-in e [:response "message"]) "")))))
 
 (defn on-change-gender-filter [gender-id]
   (swap! filters assoc :gender_id gender-id)
@@ -119,13 +140,13 @@
   (get-list))
 
 (defn on-click-patient-edit [id]
-  (get-one id #((reset! patient {:id (p "id")
-                                 :name (p "name")
-                                 :gender_id (p "gender_id")
-                                 :birthdate (coerce/from-string (p "birthdate"))
-                                 :address (p "address")
-                                 :oms (p "oms")})
-                (rmodals/modal! (patient-edit-dialog %)))))
+  (get-one id #((reset! patient {:id (% "id")
+                                 :name (% "name")
+                                 :gender_id (% "gender_id")
+                                 :birthdate (coerce/from-string (% "birthdate"))
+                                 :address (% "address")
+                                 :oms (% "oms")})
+                (reset! is-edit true))))
 
 (defn on-click-patient-delete [id]
   (rmodals/modal! (patient-delete-confirmation id)))
@@ -194,55 +215,56 @@
      (button "Cancel" #(do) {:data-dismiss "modal"
                              :class "bg-white text-amber-600"})]]])
 
-(defn patient-edit-dialog [p]
-  (let [patient  (r/atom p)
-        errors   (r/atom {:id nil :name nil :birthdate nil :gender_id nil :address nil :oms nil})
-        validate (let [es {:name       (v/validate-name (:name @patient))
-                           :gender_id  (v/validate-gender-id (:gender_id @patient))
-                           :birthdate  (v/validate-birthdate (ld/parse (.substring (coerce/to-string (:birthdate @patient)) 0 10)))
-                           :address   (v/validate-address (:address @patient))
-                           :oms       (v/validate-oms (:oms @patient))}]
-                   (reset! errors es))]
-
-    [:div.flex.flex-col.justify-between
-     [:div.flex.justify-center.bg-amber-500.p-2.rounded-t.text-white.text-lg.font-bold
+(defn patient-edit-dialog []
+  (when @is-edit
+    [:div.flex.flex-col.justify-between.border-amber-700
+     [:div.flex.justify-center.border-b-2.border-amber700.rounded.p-2.rounded-t.text-amber-500.text-lg.font-bold
       (if (some? (:id @patient)) (str "Edit patient #" (:id @patient)) "New patient")]
      [:div.container.p-4.flex.flex-col.justify-between
       (form-input :name {:placeholder "Name..."})
-      [:div.flex.justify-between.p-3
+      [:div.flex.flex-col.justify-between.p-3
+       [:div.flex.flex-col.justify-center
+        [:div.flex.justify-center
+         [:div.flex.flex-col.justify-center.font-bold "Gender:"]
+         [:select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
+                                                         :on-change #((swap! patient assoc :gender_id (-> % .-target .-value))(validate))}
+          [:option {:value ""} "---"]
+          (not-empty (for [item @genders]
+                       [:option {:key (str "gender-id-" (item "id"))
+                                 :value (item "id")}
+                        (item "name")]))]]
+        [:div.text-xs.text-red-400 (:gender_id @errors)]]
        [:div.flex.justify-center
-        [:div.flex.flex-col.justify-center.font-bold "Gender:"]
-        [:select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
-                                                        :on-change #((swap! patient assoc :gender_id (-> % .-target .-value))(validate))}
-         [:option {:value ""} "---"]
-         (not-empty (for [item @genders]
-                      [:option {:key (str "gender-id-" (item "id"))
-                                :value (item "id")}
-                       (item "name")]))]]
-       [datepicker-dropdown
-        :show-today?   true
-        :start-of-week 0
-        :placeholder   "Birthdate..."
-        :format        "yyyy-mm-dd"
-        :model         (:birthdate @patient)
-        :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]
-      (form-input :address {:placeholder "Address..."})
-      (form-input :oms {:placeholder "OMS #"
-                        :on-key-down #(when (not (is-numeric-or-special %))
-                                        (.preventDefault %))})]
-     [:hr]
-     [:div.flex.justify-end.pt-2
-      (button "Save"
-              #(if (some? (:id @patient))
-                 (update-patient @patient callback)
-                 (create-patient @patient callback))
-              {:data-dismiss "modal"
-               :disabled (not-every? nil? (vals @errors))
-               :class (when (not-every? nil? (vals @errors)) "bg-amber-200")})
-      (button "Cancel"
-              (fn [] (clear-patient)(clear-patient-errors))
-              {:data-dismiss "modal"
-               :class "bg-white text-amber-600"})]]]))
+        [datepicker-dropdown
+         :show-today?   true
+         :start-of-week 0
+         :placeholder   "Birthdate..."
+         :format        "yyyy-mm-dd"
+         :model         (:birthdate @patient)
+         :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]
+        [:div.text-xs.text-red-400 (:birthdate @errors)]]]
+       (form-input :address {:placeholder "Address..."})
+       (form-input :oms {:placeholder "OMS #"
+                         :on-key-down #(when (not (is-numeric-or-special %))
+                                         (.preventDefault %))})
+      [:hr]
+      [:div.flex.justify-end.pt-2
+       (button "Save"
+               (fn []
+                 (let [callback #((reset! is-edit false)
+                                  (clear-patient)
+                                  (clear-patient-errors)
+                                  (get-list))]
+                   (if (some? (:id @patient))
+                     (update-patient @patient callback)
+                     (create-patient @patient callback))))
+               {:data-dismiss "modal"
+                :disabled (not-every? nil? (vals @errors))
+                :class (when (not-every? nil? (vals @errors)) "bg-amber-200")})
+       (button "Cancel"
+               (fn [] (clear-patient)(clear-patient-errors))
+               {:data-dismiss "modal"
+                :class "bg-white text-amber-600"})]]]))
 
 (defn data-table-actions-cell [id]
   [:div.flex.justify-end
@@ -274,6 +296,7 @@
 
 (defn app []
   [:div.container.mx-auto.p-4
+   [patient-edit-dialog]
    [search-input]
    [data-table]
    [rmodals/modal-window]])

@@ -2,7 +2,8 @@
   (:require [cljc.java-time.local-date :as ld]))
 
 (defn validate-name [name]
-  (if (nil? (re-matches #"^[\pL\pN\s-_]{2,128}$" name)) "Name should contain from 2 to 128 alphanumeric symbols, spaces, underscores or hyphens" nil))
+  (println (str "NAME\t" name))
+  (if (nil? (re-matches #"^[a-zA-Zа-яА-Я0-9\s\-_]{2,128}$" name)) "Name should contain from 2 to 128 alphanumeric symbols, spaces, underscores or hyphens" nil))
 
 (defn validate-gender-id [gender-id]
   (if (or (not (integer? gender-id)) (not (pos? gender-id))) "Wrong gender ID" nil))
@@ -17,6 +18,7 @@
   (if (nil? (re-matches #"^\d{10}$" oms)) "OMS should contain 10 digits" nil))
 
 (defn validate [p]
+  (println (str "VALIDATE\t" p))
   (let [result [(validate-name      (:name p))
                 (validate-gender-id (:gender-id p))
                 (validate-birthdate (:birthdate p))
