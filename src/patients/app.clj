@@ -2,17 +2,19 @@
   (:require
    [patients.db :as db]
    [patients.config :refer [db-structure]]
-   [patients.validation :refer [do-validated]]
+   [patients.validation :refer [validate]]
    [clojure.data.json :as json]
+   [clojure.string :refer [join]]
    [cljc.java-time.local-date :as ld]
    [cljc.java-time.format.date-time-formatter :refer [basic-iso-date]]
    [ring.adapter.jetty :refer [run-jetty]]
    [ring.middleware.defaults :refer [api-defaults wrap-defaults]]
    [ring.middleware.json :refer [wrap-json-response wrap-json-body]]
-   [ring.util.response :refer [response resource-response header]]
+   [ring.util.response :refer [response resource-response header bad-request]]
    [compojure.core :refer [GET POST PUT DELETE ANY defroutes routes]]
    [compojure.route :as route]
-   [compojure.handler :as handler]))
+   [compojure.handler :as handler]
+   [clojure.stacktrace :refer [print-stack-trace]]))
 
 (defn page-404 [request]
   {:status 404
@@ -31,19 +33,37 @@
   (GET "/db-info" request (page-db-info request))
   (ANY "/ping" _ {:status 200 :headers {"content-type" "text/plain"} :body "pong"}))
 
+(defn wrap-content-json [h]
+  (fn [req]
+    (let [resp (h req)
+          body (or (:body resp) {:result "OK"})
+          body-resp (assoc resp :body body)
+          headers-resp (assoc-in body-resp [:headers "Content-Type"] "application/json")]
+      (println (str "RESP:\t" headers-resp))
+      headers-resp)))
+
+(defn do-validated [f patient]
+  (let [result (validate patient)]
+    (if (empty? result)
+      (f patient)
+      (bad-request (json/write-str (join "\n" result))))))
+
+(defn prepare-patient [p]
+  (println (str "PREPARE PATIENT\t" p))
+  (print-stack-trace (Exception. "foo") 10)
+  (if (string? (:birthdate p)) (update p :birthdate #(ld/parse % basic-iso-date)) p))
+
 (defroutes api
   (GET    "/patients"                      {params :params} (db/list-filtered params))
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
   (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
-  (PUT    ["/patients/:id", :id #"[0-9]+"] {params :params body :body} (do-validated db/update! (update (assoc body :id (Integer/parseInt (:id params))) :birthdate #(ld/parse % basic-iso-date))))
+  (PUT    ["/patients/:id", :id #"[0-9]+"] req (do-validated db/update!
+                                                             (prepare-patient (assoc (:body req) :id (Integer/parseInt (get-in req [:params :id]))))))
   (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! (Integer/parseInt id)))
 
   (GET "/genders" [] (db/get-genders))
 
   page-404)
-
-(defn wrap-content-json [h]
-  (fn [req] (assoc-in (h req) [:headers "Content-Type"] "application/json")))
 
 (def app
   (routes static (wrap-content-json (wrap-json-body (wrap-json-response (wrap-defaults api api-defaults)) {:keywords? true}))))
@@ -55,8 +75,8 @@
    (:objects (json/read-json (slurp "dev/dataset.json")))))
 
 (defn -main []
-  (if (not= db-structure (db/db-info)) (db/init-database) nil)
+  ;; (if (not= db-structure (db/db-info)) (db/init-database) nil)
 
-  ;;(doseq [patient dataset-list] (db/insert! patient))
+  ;; (doseq [patient dataset-list] (db/insert! patient))
 
   (run-jetty app {:port 8080 :join? true}))

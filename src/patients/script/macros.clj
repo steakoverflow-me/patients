@@ -13,6 +13,5 @@
                                        :type "text"
                                        :value (~field @patients.script.app/patient)
                                        :on-change #((swap! patients.script.app/patient assoc ~field (-> % .-target .-value))
-                                                    (println (~field @patients.script.app/patient))
                                                     (patients.script.app/validate))} ~props)]
     [:div.text-xs.text-red-400 (~field @patients.script.app/errors)]])

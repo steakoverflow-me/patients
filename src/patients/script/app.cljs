@@ -71,6 +71,12 @@
 (defn clear-search []
   (reset! search nil))
 
+(defn clear-patient []
+  (reset! patient patient-init))
+
+(defn clear-patient-errors []
+  (reset! errors patient-init))
+
 ;; API functions
 
 (defn get-list
@@ -118,7 +124,7 @@
 
 (defn error-handler [e]
   (println "error-handler" e)
-  (rmodals/modal! (notification (gstring/unescapeEntities (or (:status-text e) "")) (gstring/unescapeEntities (or (get-in e [:response "message"]) "")))))
+  (rmodals/modal! (notification (gstring/unescapeEntities (or (:status-text e) "Error")) (gstring/unescapeEntities (or (:response e) "No information :(")))))
 
 (defn on-change-gender-filter [gender-id]
   (swap! filters assoc :gender_id gender-id)
@@ -227,7 +233,7 @@
       (if (some? (:id @patient)) (str "Edit patient #" (:id @patient)) "New patient")]
      [:div.container.p-4.flex.flex-col.justify-between
       (form-input :name {:placeholder "Name..."})
-      [:div.flex.flex-col.justify-between.p-3
+      [:div.flex.justify-between.p-3
        [:div.flex.flex-col.justify-center
         [:div.flex.justify-center
          [:div.flex.flex-col.justify-center.font-bold "Gender:"]
@@ -239,14 +245,15 @@
                                  :value (item "id")}
                         (item "name")]))]]
         [:div.text-xs.text-red-400 (:gender_id @errors)]]
-       [:div.flex.justify-center
-        [datepicker-dropdown
-         :show-today?   true
-         :start-of-week 0
-         :placeholder   "Birthdate..."
-         :format        "yyyy-mm-dd"
-         :model         (:birthdate @patient)
-         :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]
+       [:div.flex.flex-col.justify-center
+        [:div.my-1.border-amber-700.border-2.rounded-md
+         [datepicker-dropdown
+          :show-today?   true
+          :start-of-week 0
+          :placeholder   "Birthdate..."
+          :format        "yyyy-mm-dd"
+          :model         (:birthdate @patient)
+          :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]]
         [:div.text-xs.text-red-400 (:birthdate @errors)]]]
        (form-input :address {:placeholder "Address..."})
        (form-input :oms {:placeholder "OMS #"
@@ -267,7 +274,10 @@
                 :disabled (not-every? nil? (vals @errors))
                 :class (when (not-every? nil? (vals @errors)) "bg-amber-200")})
        (button "Cancel"
-               (fn [] (clear-patient)(clear-patient-errors))
+               (fn []
+                 (reset! is-edit false)
+                 (clear-patient)
+                 (clear-patient-errors))
                {:data-dismiss "modal"
                 :class "bg-white text-amber-600"})]]]))
 
