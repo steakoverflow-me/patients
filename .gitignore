@@ -4,6 +4,7 @@ debug*
 .nrepl-port
 .lein-failures
 .lein-repl-history
+.webdrivers
 
 resources/public/**
 !resources/public/assets

@@ -18,7 +18,7 @@
          db/convert-birthdate-to-local-date)
    (:objects (json/read-json (slurp "dev/dataset.json")))))
 
-(use-fixtures :once with-db)
+(use-fixtures :each with-db)
 
 (deftest test-db
   (is (= db-structure (db/db-info)))

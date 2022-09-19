@@ -19,7 +19,6 @@
   (if (nil? (re-matches #"^\d{10}$" oms)) "OMS should contain 10 digits" nil))
 
 (defn validate [p]
-  (println (str "VALIDATE:\t" p))
   (let [result [(validate-name      (:name p))
                 (validate-gender-id (:gender_id p))
                 (validate-birthdate (:birthdate p))

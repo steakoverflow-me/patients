@@ -34,14 +34,16 @@
 
   :main patients.app
 
-  :aliases {"test" ["cloverage" "--runner" :eftest]}
+  :aliases {"testx" ["cloverage" "--runner" :eftest]}
 
   :profiles {:dev  {:source-paths ["dev"]}
 
              :test {:dependencies [[clj-http "3.12.3"]
                                    [eftest "0.5.9"]
                                    [org.clojure/test.check "1.1.1"]
-                                   [io.zonky.test/embedded-postgres "2.0.1"]]}}
+                                   [io.zonky.test/embedded-postgres "2.0.1"]
+                                   [com.google.guava/guava "31.1-jre"]
+                                   [webdriver "0.17.1"]]}}
   :cljsbuild {:builds
               [{:source-paths ["src/patients/script"]
                 :jar true

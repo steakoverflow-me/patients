@@ -181,13 +181,13 @@
    [:tr.py-2.border-b.border-amber-500 [:th.px-2 "ID"][:th.px-2 "Name"][:th.px-2 "Gender"][:th.px-2 "Birthdate"][:th.px-2 "Address"][:th.px-2 "OMS #"][:th.px-2]]
    [:tr.py-2.border-b-2.border-amber-700
     [:th.px-2]
-    [:th.px-2 (filter-input :name {})]
-    [:th.px-2 [:select.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
+    [:th.px-2 (filter-input :name {:id "name-filter"})]
+    [:th.px-2 [:select#gender-filter.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
                                                           :on-change #(on-change-gender-filter (-> % .-target .-value))}
                [:option {:value ""} "---"]
                (not-empty (for [item @genders]
                             [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
-    [:th.px-2 [:div.flex.flex-col.justify-center
+    [:th.px-2 [:div#birthdate-filters.flex.flex-col.justify-center
                [:div.my-1.border-amber-700.border-2.rounded-md
                 [datepicker-dropdown
                  :show-today?   true
@@ -204,12 +204,14 @@
                  :format        "yyyy-mm-dd"
                  :model         filter-birthdate-to
                  :on-change     on-change-birthdate-to]]]]
-    [:th.px-2 (filter-input :address {})]
+    [:th.px-2 (filter-input :address {:id "address-filter"})]
     [:th.px-2 (filter-input :oms {:on-key-down #(when (not (is-numeric-or-special %))
-                                             (.preventDefault %))})]
+                                             (.preventDefault %))
+                                  :id "oms-filter"})]
     [:th.px-2
      [:div.flex.justify-end
-      (button "⌫" on-click-clear-filters {:title "Clear filters"})]]]])
+      (button "⌫" on-click-clear-filters {:title "Clear filters"
+                                           :id "clear-filters-button"})]]]])
 
 (defn notification [header content]
   [:div.flex.flex-col.justify-between
@@ -238,12 +240,12 @@
      [:div.flex.justify-center.border-b-2.border-amber700.rounded.p-2.rounded-t.text-amber-500.text-lg.font-bold
       (if (some? (:id @patient)) (str "Edit patient #" (:id @patient)) "New patient")]
      [:div.container.p-4.flex.flex-col.justify-between
-      (form-input :name {:placeholder "Name..."})
+      (form-input :name {:placeholder "Name..." :id "name-input"})
       [:div.flex.justify-between.p-3
        [:div.flex.flex-col.justify-center
         [:div.flex.justify-center
          [:div.flex.flex-col.justify-center.font-bold "Gender:"]
-         [:select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
+         [:select#gender-select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
                                                          :on-change #((swap! patient assoc :gender_id (js/parseInt (-> % .-target .-value)))(validate))}
           [:option {:value ""} "---"]
           (not-empty (for [item @genders]
@@ -252,7 +254,7 @@
                         (item "name")]))]]
         [:div.text-xs.text-red-400 (:gender_id @errors)]]
        [:div.flex.flex-col.justify-center
-        [:div.my-1.border-amber-700.border-2.rounded-md
+        [:div#birthdate-input.my-1.border-amber-700.border-2.rounded-md
          [datepicker-dropdown
           :show-today?   true
           :start-of-week 0
@@ -261,8 +263,9 @@
           :model         (:birthdate @patient)
           :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]]
         [:div.text-xs.text-red-400 (:birthdate @errors)]]]
-       (form-input :address {:placeholder "Address..."})
+       (form-input :address {:placeholder "Address..." :id "address-input"})
        (form-input :oms {:placeholder "OMS #"
+                         :id "oms-input"
                          :on-key-down #(when (not (is-numeric-or-special %))
                                          (.preventDefault %))})
       [:hr]
@@ -278,23 +281,27 @@
                      (create-patient @patient callback))))
                {:data-dismiss "modal"
                 :disabled (not-every? nil? (vals @errors))
-                :class (when (not-every? nil? (vals @errors)) "bg-amber-200")})
+                :class (when (not-every? nil? (vals @errors)) "bg-amber-200")
+                :id "save-button"})
        (button "Cancel"
                (fn []
                  (reset! is-edit false)
                  (clear-patient)
                  (clear-patient-errors))
                {:data-dismiss "modal"
-                :class "bg-white text-amber-600"})]]]))
+                :class "bg-white text-amber-600"
+                :id "cancel-button"})]]]))
 
 (defn data-table-actions-cell [id]
   [:div.flex.justify-end
-   (button "➙" #(on-click-patient-edit id) {:title "Edit patient"})
-   (button "⌫" #(on-click-patient-delete id) {:title "Delete patient"})])
+   (button "➙" #(on-click-patient-edit id) {:title "Edit patient"
+                                             :id (str "edit-patient-" id "-button")})
+   (button "⌫" #(on-click-patient-delete id) {:title "Delete patient"
+                                               :id (str "delete-patient-" id "-button")})])
 
 (defn data-table []
   [:div.container.border-amber-700.border-2.rounded.p-2
-   [:table.border-collapse
+   [:table#data-table.border-collapse
     [data-table-header]
     [:tbody
      (not-empty (for [row @data]
@@ -309,7 +316,7 @@
 
 (defn top-block []
   [:div.container.w-full.flex.justify-between.px-0.py-2
-   (button "New patient..." on-click-patient-create)
+   (button "New patient..." on-click-patient-create {:id "new-patient-button"})
    [:div.flex.justify-center
     [:input.border-amber-700.border-2.rounded.px-2 {:type "text"
                                                     :placeholder "Search..."
