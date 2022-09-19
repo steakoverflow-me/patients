@@ -68,7 +68,9 @@
 
   (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 2)))]
     (doseq [s strs]
-      (is (every? #(str/includes? (str/join "\n" [(:name %) (:birthdate %) (:address %) (:oms %)]) s) (db/list-filtered {:q s})))))
+      (let [result (db/list-filtered {:q s})
+            result-strs (map #(str/join "\n" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)]
+      (is (every? #(str/includes? % s) result-strs)))))
 
   (let [id (+ 102 (rand-int 1000))]
     (is (nil? (first (db/get-one id)))))
@@ -76,13 +78,11 @@
   (let [id       (inc (rand-int 101))
         old      (first (db/get-one id))
         new-name (first (generate-string-except [] 3))
-        new      (update old :name (constantly new-name))]
+        new      (update (update old :name (constantly new-name))
+                         :birthdate
+                         ld/parse)]
     (db/update! (dissoc new :gender))
-    (is (= (first (db/get-one id)) new)))
-
-  (let [id (inc (rand-int 101))]
-    (db/delete! id)
-    (is (nil? (first (db/get-one id)))))
+    (is (= (update (first (db/get-one id)) :birthdate ld/parse) new)))
 
   (let [id (inc (rand-int 101))]
     (db/delete! id)

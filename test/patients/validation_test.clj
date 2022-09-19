@@ -1,5 +1,7 @@
 (ns patients.validation-test
   (:require [patients.validation :as v]
+            [patients.app :refer [do-validated]]
+            [clojure.string :as str]
             [cljc.java-time.local-date :as ld]
             [clojure.test :refer [deftest is]]
             [clojure.test.check.generators :as gen]
@@ -61,12 +63,12 @@
 
 (deftest validate-test
   (let [invalid {:name      (generate-special-string-of-length 1)
-                 :gender-id -1
+                 :gender_id -1
                  :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
         valid   {:name      (generate-string-of-length (inc (rand-int 128)))
-                 :gender-id (inc (rand-int 10))
+                 :gender_id (inc (rand-int 10))
                  :birthdate (generate-local-date)
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
                  :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
@@ -76,16 +78,16 @@
 (deftest do-validated-test
   (let [num     (rand-int 100)
         invalid {:name      (generate-special-string-of-length 1)
-                 :gender-id -1
+                 :gender_id -1
                  :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
         valid   {:name      (generate-string-of-length (inc (rand-int 127)))
-                 :gender-id (inc (rand-int 10))
+                 :gender_id (inc (rand-int 10))
                  :birthdate (generate-local-date)
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
                  :oms       (str (+ 1000000000 (long (rand 9000000000))))}]
-    (let [result (v/do-validated (fn [_] num) invalid)]
-      (is (= 5 (count (:errors result)))))
-    (println valid)
-    (is (= num (v/do-validated (fn [_] num) valid)))))
+    (let [result (do-validated (fn [_] num) invalid)]
+      (println result)
+      (is (= 5 (count (str/split (:body result) #"\\n")))))
+    (is (= num (do-validated (fn [_] num) valid)))))
