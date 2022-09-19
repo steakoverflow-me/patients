@@ -1,7 +1,8 @@
 (ns patients.integration-test
   (:require [patients.fixtures :refer [with-db with-server test-port]]
             [webdriver.core :refer :all]
-            [clojure.test :refer [deftest use-fixtures is]]))
+            [clojure.test :refer [deftest use-fixtures is]]
+            [clojure.string :as str]))
 
 (use-fixtures :each with-db)
 
@@ -10,14 +11,14 @@
 (System/setProperty "webdriver.chrome.driver" "D:\\dev\\chromedriver.exe")
 
 (defonce sasha {:name "Sasha"
-                :gender_id 1
-                :birthdate "27/08/1985"
+                :gender "Male"
+                :birthdate "27 August 1985"
                 :address "Smolensk"
                 :oms "0123456789"})
 
 (defonce iuliia {:name "Iuliia"
-                 :gender_id 2
-                 :birthdate "26/04/1985"
+                 :gender "Female"
+                 :birthdate "26 April 1985"
                  :address "Krasnoyarsk"
                  :oms "1234567890"})
 
@@ -26,19 +27,27 @@
 ;; (.addArguments chrome-options "headless")
 (defonce driver {:driver (org.openqa.selenium.chrome.ChromeDriver. chrome-options)})
 
+(defn set-date [date-str xpath]
+  (let [ls    (str/split date-str #" ")
+        day   (nth ls 0)
+        month (nth ls 1)
+        year  (nth ls 2)]
+    (click (wait-for-element driver :xpath (str xpath "//div[@class = 'rc-datepicker-dropdown-anchor']")))))
+
 (defn fill-patient [patient]
   (set-element driver
                (wait-for-element driver :id "name-input")
                (:name patient))
   (set-element driver
                (get-visible-element driver :id "gender-select")
-               (:gender_id patient))
+               (:gender patient))
   (set-element driver
                (wait-for-element driver :id "address-input")
                (:address patient))
   (set-element driver
                (wait-for-element driver :id "oms-input")
-               (:oms patient)))
+               (:oms patient))
+  (set-date (:birthdate patient) "//div[@id = 'birthdate-input']"))
 
 (deftest home
   (to driver (str "http://localhost:" test-port))
@@ -51,7 +60,7 @@
 
   (click (get-visible-element driver :id "new-patient-button"))
 
-  (set-element driver (wait-for-element driver :id "name-input")))
+  (fill-patient sasha))
 
 
 
