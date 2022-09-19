@@ -8,7 +8,9 @@
   (if (or (not (integer? gender-id)) (not (pos? gender-id))) (str "Wrong gender ID: " gender-id) nil))
 
 (defn validate-birthdate [birthdate]
-  (if (ld/is-after birthdate (ld/now)) "Birthdate can't be in the future" nil))
+  (if (nil? birthdate) 
+	  "Birthdate can't be empty" 
+	  (if (ld/is-after birthdate (ld/now)) "Birthdate can't be in the future" nil)))
 
 (defn validate-address [address]
   (if (empty? address) "Address can't be empty" nil))
@@ -17,7 +19,7 @@
   (if (nil? (re-matches #"^\d{10}$" oms)) "OMS should contain 10 digits" nil))
 
 (defn validate [p]
-  (println (str "VALIDATE\t" p))
+  (println (str "VALIDATE:\t" p))
   (let [result [(validate-name      (:name p))
                 (validate-gender-id (:gender_id p))
                 (validate-birthdate (:birthdate p))

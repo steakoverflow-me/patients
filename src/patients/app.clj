@@ -39,7 +39,7 @@
           body (or (:body resp) {:result "OK"})
           body-resp (assoc resp :body body)
           headers-resp (assoc-in body-resp [:headers "Content-Type"] "application/json")]
-      (println (str "RESP:\t" headers-resp))
+      ;; (println (str "RESP:\t" headers-resp))
       headers-resp)))
 
 (defn do-validated [f patient]
@@ -49,14 +49,13 @@
       (bad-request (json/write-str (join "\n" result))))))
 
 (defn prepare-patient [p]
-  (println (str "PREPARE PATIENT\t" p))
-  (print-stack-trace (Exception. "foo") 10)
   (if (string? (:birthdate p)) (update p :birthdate #(ld/parse % basic-iso-date)) p))
 
 (defroutes api
   (GET    "/patients"                      {params :params} (db/list-filtered params))
   (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
-  (POST   "/patients"                      [request]        (do-validated db/insert! (:body request)))
+  (POST   "/patients"                      req (do-validated db/insert! 
+															 (prepare-patient (:body req))))
   (PUT    ["/patients/:id", :id #"[0-9]+"] req (do-validated db/update!
                                                              (prepare-patient (assoc (:body req) :id (Integer/parseInt (get-in req [:params :id]))))))
   (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! (Integer/parseInt id)))

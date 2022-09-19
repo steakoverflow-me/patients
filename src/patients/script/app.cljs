@@ -113,11 +113,12 @@
 ;; Validation
 
 (defn validate []
-  (let [es {:name      (v/validate-name (:name @patient))
+  (let [bd (if (nil? (:birthdate @patient)) nil (ld/parse (subs (coerce/to-string (:birthdate @patient)) 0 10)))
+		es {:name      (v/validate-name (or (:name @patient) ""))
             :gender_id (v/validate-gender-id (:gender_id @patient))
-            :birthdate (v/validate-birthdate (ld/parse (.substring (coerce/to-string (:birthdate @patient)) 0 10)))
-            :address   (v/validate-address (:address @patient))
-            :oms       (v/validate-oms (:oms @patient))}]
+            :birthdate (v/validate-birthdate bd)
+            :address   (v/validate-address (or (:address @patient) ""))
+            :oms       (v/validate-oms (or (:oms @patient) ""))}]
     (reset! errors es)))
 
 ;; Event handler functions
@@ -149,6 +150,11 @@
 (defn on-click-clear-search []
   (clear-search)
   (get-list))
+
+(defn on-click-patient-create []
+  (clear-patient)
+  (clear-patient-errors)
+  (reset! is-edit true))
 
 (defn on-click-patient-edit [id]
   (get-one id #((reset! patient {:id (% "id")
@@ -238,7 +244,7 @@
         [:div.flex.justify-center
          [:div.flex.flex-col.justify-center.font-bold "Gender:"]
          [:select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
-                                                         :on-change #((swap! patient assoc :gender_id (-> % .-target .-value))(validate))}
+                                                         :on-change #((swap! patient assoc :gender_id (js/parseInt (-> % .-target .-value)))(validate))}
           [:option {:value ""} "---"]
           (not-empty (for [item @genders]
                        [:option {:key (str "gender-id-" (item "id"))
@@ -301,18 +307,20 @@
                    [:td.px-2 [:div.flex.justify-end (str/join "-" (re-seq #"\d{1,3}" (str (row "oms"))))]]
                    [:td.px-2 (data-table-actions-cell (row "id"))]]))]]])
 
-(defn search-input []
-  [:div.container.mx-auto.flex.justify-end.px-0.py-2
-   [:input.border-amber-700.border-2.rounded.px-2 {:type "text"
-                                                   :placeholder "Search..."
-                                                   :value @search
-                                                   :on-change #(on-change-search  (-> % .-target .-value))}]
-   (button "⌫" on-click-clear-search {:title "Clear search"})])
+(defn top-block []
+  [:div.container.w-full.flex.justify-between.px-0.py-2
+   (button "New patient..." on-click-patient-create)
+   [:div.flex.justify-center
+    [:input.border-amber-700.border-2.rounded.px-2 {:type "text"
+                                                    :placeholder "Search..."
+                                                    :value @search
+                                                    :on-change #(on-change-search  (-> % .-target .-value))}]
+    (button "⌫" on-click-clear-search {:title "Clear search"})]])
 
 (defn app []
   [:div.container.mx-auto.p-4
    [patient-edit-dialog]
-   [search-input]
+   [top-block]
    [data-table]
    [rmodals/modal-window]])
 
