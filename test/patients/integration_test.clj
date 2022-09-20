@@ -12,14 +12,14 @@
 
 (defonce sasha {:name "Sasha"
                 :gender "Male"
-                :birthdate "27 August 2015"
+                :birthdate "27 August 2020"
                 :birthdate-iso "2015-08-27"
                 :address "Smolensk"
                 :oms "0123456789"})
 
 (defonce iuliia {:name "Iuliia"
                  :gender "Female"
-                 :birthdate "26 April 2015"
+                 :birthdate "26 April 2020"
                  :birthdate-iso "2015-04-26"
                  :address "Krasnoyarsk"
                  :oms "1234567890"})
@@ -39,10 +39,12 @@
         xpath (format "//div[@id = '%s']" id)]
     (click (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-dropdown-anchor')]")))
     (let [prev-y (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-prev-year')]"))
+          next-y (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-next-year')]"))
           prev-m (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-prev-month')]"))
-          curr (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-month')]"))]
-      (while (not (str/includes? (.getText curr) (str (inc (Integer/parseInt year)))))
-        (click prev-y))
+          curr (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-month')]"))
+          year-num (Integer/parseInt year)]
+      (while (not (str/includes? (.getText curr) (str (inc year-num))))
+        (click (if (> (Integer/parseInt (apply str (take-last 4 (.getText curr)))) (inc year-num)) prev-y next-y)))
       (while (not= (.getText curr) (str month " " year))
         (click prev-m))
       (click (wait-for-element driver :xpath (str xpath "//td[contains(@class, 'rc-datepicker-date') and not(contains(@class, 'rc-datepicker-out-of-focus')) and text()='" day "']"))))))
@@ -50,18 +52,35 @@
 (defn fill-input [id value]
   (set-element driver (get-visible-element driver :id id) value))
 
+(defn is-error [id lvl]
+  (boolean (not-empty (.getText (get-element driver :xpath (format "//*[@id='%s']%s/div[contains(@class, 'text-red-400')]" id (apply str (repeat lvl "/.."))))))))
+
+(defn check-error
+  ([id] (check-error id 1))
+  ([id lvl]
+   (wait-for-element driver :xpath "//button[@id='save-button' and @disabled]")
+   (is (is-error id lvl))))
+
+(defn check-valid
+  ([id] (check-valid id 1))
+  ([id lvl]
+   (is (not (is-error id lvl)))))
+
 (defn fill-patient [patient]
   (fill-input "name-input" (:name patient))
   (fill-input "gender-select" (:gender patient))
   (set-date "birthdate-input" (:birthdate patient))
   (fill-input "address-input" (:address patient))
-  (fill-input "oms-input" (:oms patient))
+  (fill-input "oms-input" (:oms patient)))
 
 (defn get-count []
   (count (get-elements driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]")))
 
 (defn check-count [count]
   (is (= count (get-count))))
+
+(defn check-value [id value]
+  (wait-for-element driver :xpath (format "//*[@id='%s' and @value='%s']" id value)))
 
 (defn check-sasha []
   (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))))
@@ -197,26 +216,34 @@
   (check-no-iuliia)
   (clear-filters)
 
-  (set-date "birthdate-filter-from" "1 June 2015")
+  (set-date "birthdate-filter-from" "1 June 2020")
   (Thread/sleep sleep)
   (check-count 1)
   (check-sasha)
   (check-no-iuliia)
   (clear-filters)
 
-  (set-date "birthdate-filter-to" "1 June 2015")
+  (set-date "birthdate-filter-to" "1 June 2020")
   (Thread/sleep sleep)
   (check-count 1)
   (check-no-sasha)
   (check-iuliia)
   (clear-filters)
 
-  (set-date "birthdate-filter-from" "1 June 2015")
-  (set-date "birthdate-filter-to" "1 July 2015")
+  (set-date "birthdate-filter-from" "1 June 2020")
+  (set-date "birthdate-filter-to" "1 July 2020")
   (Thread/sleep sleep)
   (check-count 0)
   (check-no-sasha)
   (check-no-iuliia)
+  (clear-filters)
+
+  (set-date "birthdate-filter-from" "1 January 2020")
+  (set-date "birthdate-filter-to" "1 September 2020")
+  (Thread/sleep sleep)
+  (check-count 2)
+  (check-sasha)
+  (check-iuliia)
   (clear-filters)
 
   (fill-input "name-filter" "a")
@@ -275,4 +302,64 @@
 
   ;; EDIT/VALIDATION
 
-  )
+  (let [sasha-id (.getText (wait-for-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']/../../*[1]/div"))
+        sasha-edit-button (wait-for-element driver :id (format "edit-patient-%s-button" sasha-id))
+        sasha-delete-button (wait-for-element driver :id (format "delete-patient-%s-button" sasha-id))
+        iuliia-id (.getText (wait-for-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']/../../*[1]/div"))
+        iuliia-delete-button (wait-for-element driver :id (format "delete-patient-%s-button" iuliia-id))]
+
+    (click sasha-edit-button)
+    (wait-for-element driver :id "save-button")
+    (wait-for-element driver :id "cancel-button")
+
+    (check-value "name-input" (:name sasha))
+    (check-valid "name-input")
+
+    (let [gender-id (.getAttribute (wait-for-element driver :xpath (format "//select[@id='gender-select']/option[text()='%s']" (:gender sasha))) "value")]
+      (wait-for-element driver :xpath (format "//select[@id='gender-select' and @value='%s']" gender-id)))
+    (check-valid "gender-select")
+
+    (click (wait-for-element driver :xpath "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-dropdown-anchor')]"))
+    (let [[day month-year] (str/split (:birthdate sasha) #" " 2)]
+      (wait-for-element driver :xpath (format "//dev[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-month') and text()='%s']" month-year))
+      (wait-for-element driver :xpath (format "//dev[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-selected') and text()='%s']" day)))
+    (check-valid "birthdate-input")
+
+    (check-value "address-input" (:address sasha))
+    (check-valid "address-input")
+    (check-value "oms-input" (:oms sasha))
+    (check-valid "oms-input")
+
+    (let [try-invalid (fn [v] ((fill-input "name-input" v)
+                               (check-error "name-input")
+                               (fill-input "name-input" (:name sasha))
+                               (check-valid "name-input")))]
+      (try-invalid "")
+      (try-invalid "A")
+      (try-invalid (apply str (repeat 35 "A")))
+      (try-invalid "abcdefg#$%"))
+
+    (fill-input "gender-select" "---")
+    (check-error "gender-select" 2)
+    (fill-input "gender-select" (:gender sasha))
+    (check-valid "gender-select" 2)
+
+    (set-date "birthdate-input" "20 December 2030")
+    (check-error "birthdate-input")
+    (set-date "birthdate-input" (:birthdate sasha))
+    (check-valid "birthdate-input")
+
+    (fill-input "address-input" "")
+    (check-error "address-input")
+    (fill-input "address-input" (:address sasha))
+    (check-valid "address-input")
+
+    (let [try-invalid (fn [v] ((fill-input "oms-input" v)
+                               (check-error "oms-input")
+                               (fill-input "oms-input" (:oms sasha))
+                               (check-valid "oms-input")))]
+      (try-invalid "")
+      (try-invalid "123456789")
+      (try-invalid "12345678901")
+      (try-invalid "123456789A"))
+    ))

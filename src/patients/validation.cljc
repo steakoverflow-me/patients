@@ -8,8 +8,8 @@
   (if (or (not (integer? gender-id)) (not (pos? gender-id))) (str "Wrong gender ID: " gender-id) nil))
 
 (defn validate-birthdate [birthdate]
-  (if (nil? birthdate) 
-	  "Birthdate can't be empty" 
+  (if (nil? birthdate)
+	  "Birthdate can't be empty"
 	  (if (ld/is-after birthdate (ld/now)) "Birthdate can't be in the future" nil)))
 
 (defn validate-address [address]
