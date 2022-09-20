@@ -191,8 +191,8 @@
                [:option {:value ""} "---"]
                (not-empty (for [item @genders]
                             [:option {:key (str "gender-id-" (item "id")) :value (item "id")} (item "name")]))]]
-    [:th.px-2 [:div#birthdate-filters.flex.flex-col.justify-center
-               [:div.my-1.border-amber-700.border-2.rounded-md
+    [:th.px-2 [:div.flex.flex-col.justify-center
+               [:div#birthdate-filter-from.my-1.border-amber-700.border-2.rounded-md
                 [datepicker-dropdown
                  :show-today?   true
                  :start-of-week 0
@@ -200,7 +200,7 @@
                  :format        "yyyy-mm-dd"
                  :model         filter-birthdate-from
                  :on-change     on-change-birthdate-from]]
-               [:div.mb-1.border-amber-700.border-2.rounded-md
+               [:div#birthdate-filter-to.mb-1.border-amber-700.border-2.rounded-md
                 [datepicker-dropdown
                  :show-today?   true
                  :start-of-week 0

@@ -31,11 +31,12 @@
 ;; (.addArguments chrome-options "headless")
 (defonce driver {:driver (org.openqa.selenium.chrome.ChromeDriver. chrome-options)})
 
-(defn set-date [date-str xpath]
+(defn set-date [id date-str]
   (let [ls    (str/split date-str #" ")
         day   (nth ls 0)
         month (nth ls 1)
-        year  (nth ls 2)]
+        year  (nth ls 2)
+        xpath (format "//div[@id = '%s']" id)]
     (click (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-dropdown-anchor')]")))
     (let [prev-y (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-prev-year')]"))
           prev-m (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-prev-month')]"))
@@ -46,26 +47,39 @@
         (click prev-m))
       (click (wait-for-element driver :xpath (str xpath "//td[contains(@class, 'rc-datepicker-date') and not(contains(@class, 'rc-datepicker-out-of-focus')) and text()='" day "']"))))))
 
+(defn fill-input [id value]
+  (set-element driver (get-visible-element driver :id id) value))
+
 (defn fill-patient [patient]
-  (set-element driver
-               (wait-for-element driver :id "name-input")
-               (:name patient))
-  (set-element driver
-               (get-visible-element driver :id "gender-select")
-               (:gender patient))
-  (set-element driver
-               (get-visible-element driver :id "address-input")
-               (:address patient))
-  (set-element driver
-               (get-visible-element driver :id "oms-input")
-               (:oms patient))
-  (set-date (:birthdate patient) "//div[@id = 'birthdate-input']"))
+  (fill-input "name-input" (:name patient))
+  (fill-input "gender-select" (:gender patient))
+  (set-date "birthdate-input" (:birthdate patient))
+  (fill-input "address-input" (:address patient))
+  (fill-input "oms-input" (:oms patient))
 
 (defn get-count []
   (count (get-elements driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]")))
 
-(defn fill-input [id value]
-  (set-element driver (get-visible-element driver :id id) value))
+(defn check-count [count]
+  (is (= count (get-count))))
+
+(defn check-sasha []
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))))
+
+(defn check-no-sasha []
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+
+(defn check-iuliia []
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))))
+
+(defn check-no-iuliia []
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+
+(defn clear-filters []
+  (click (get-visible-element driver :id "clear-filters-button")))
+
+(defn clear-search []
+  (click (get-visible-element driver :id "clear-search-button")))
 
 (deftest workflow
   (to driver (str "http://localhost:" test-port))
@@ -87,7 +101,7 @@
   (is (nil? (get-visible-element driver :id "save-button")))
   (is (nil? (get-visible-element driver :id "cancel-button")))
 
-  (is (= 1 (get-count)))
+  (check-count 1)
 
   (click (get-visible-element driver :id "new-patient-button"))
 
@@ -98,37 +112,37 @@
   (is (nil? (get-visible-element driver :id "save-button")))
   (is (nil? (get-visible-element driver :id "cancel-button")))
 
-  (is (= 2 (get-count)))
+  (check-count 2)
 
   ;; SEARCH
 
   (fill-input "search-input" "sk")
   (Thread/sleep sleep)
-  (is (= 2 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
-  (click (get-visible-element driver :id "clear-search-button"))
+  (check-count 2)
+  (check-sasha)
+  (check-iuliia)
+  (clear-search)
 
   (fill-input "search-input" "Sa")
   (Thread/sleep sleep)
-  (is (= 1 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
-  (click (get-visible-element driver :id "clear-search-button"))
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-search)
 
   (fill-input "search-input" "90")
   (Thread/sleep sleep)
-  (is (= 1 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
-  (click (get-visible-element driver :id "clear-search-button"))
+  (check-count 1)
+  (check-iuliia)
+  (check-no-sasha)
+  (clear-search)
 
   (fill-input "search-input" "abcde")
   (Thread/sleep sleep)
-  (is (= 0 (get-count)))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
-  (click (get-visible-element driver :id "clear-search-button"))
+  (check-count 0)
+  (check-no-sasha)
+  (check-no-iuliia)
+  (clear-search)
 
   ;; FILTERS
 
@@ -136,28 +150,129 @@
 
   (fill-input "name-filter" "S")
   (Thread/sleep sleep)
-  (is (= 1 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
-  (click (get-visible-element driver :id "clear-filters-button"))
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-filters)
 
   (fill-input "name-filter" "I")
   (Thread/sleep sleep)
-  (is (= 1 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
-  (click (get-visible-element driver :id "clear-filters-button"))
+  (check-count 1)
+  (check-iuliia)
+  (check-no-sasha)
+  (clear-filters)
 
   (fill-input "name-filter" "a")
   (Thread/sleep sleep)
-  (is (= 2 (get-count)))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
-  (click (get-visible-element driver :id "clear-filters-button"))
+  (check-count 2)
+  (check-sasha)
+  (check-iuliia)
+  (clear-filters)
 
   (fill-input "name-filter" "A")
   (Thread/sleep sleep)
-  (is (= 0 (get-count)))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
-  (click (get-visible-element driver :id "clear-filters-button")))
+  (check-count 0)
+  (check-no-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (fill-input "gender-filter-select" "Male")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (fill-input "gender-filter-select" "Female")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-no-sasha)
+  (check-iuliia)
+  (clear-filters)
+
+  (fill-input "gender-filter-select" "Others")
+  (Thread/sleep sleep)
+  (check-count 0)
+  (check-no-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (set-date "birthdate-filter-from" "1 June 2015")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (set-date "birthdate-filter-to" "1 June 2015")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-no-sasha)
+  (check-iuliia)
+  (clear-filters)
+
+  (set-date "birthdate-filter-from" "1 June 2015")
+  (set-date "birthdate-filter-to" "1 July 2015")
+  (Thread/sleep sleep)
+  (check-count 0)
+  (check-no-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "sk")
+  (fill-input "oms-filter" "0")
+  (Thread/sleep sleep)
+  (check-count 2)
+  (check-sasha)
+  (check-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "nsk")
+  (fill-input "oms-filter" "0")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "rsk")
+  (fill-input "oms-filter" "0")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-no-sasha)
+  (check-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "sk")
+  (fill-input "oms-filter" "90")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-no-sasha)
+  (check-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "sk")
+  (fill-input "oms-filter" "01")
+  (Thread/sleep sleep)
+  (check-count 1)
+  (check-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  (fill-input "name-filter" "a")
+  (fill-input "address-filter" "sk")
+  (fill-input "oms-filter" "54")
+  (Thread/sleep sleep)
+  (check-count 0)
+  (check-no-sasha)
+  (check-no-iuliia)
+  (clear-filters)
+
+  ;; EDIT/VALIDATION
+
+  )
