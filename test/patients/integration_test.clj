@@ -1,6 +1,7 @@
 (ns patients.integration-test
   (:require [patients.fixtures :refer [with-db with-server test-port]]
             [webdriver.core :refer :all]
+            [clojure.core.async :refer [<!]]
             [clojure.test :refer [deftest use-fixtures is]]
             [clojure.string :as str]))
 
@@ -8,7 +9,7 @@
 
 (use-fixtures :once with-server)
 
-(defonce sleep 1000)
+(defonce sleep 1500)
 
 (defonce sasha {:name "Sasha"
                 :gender "Male"
@@ -31,12 +32,17 @@
 ;; (.addArguments chrome-options "headless")
 (defonce driver {:driver (org.openqa.selenium.chrome.ChromeDriver. chrome-options)})
 
+(defn click-backdrop []
+  (let [back (get-element driver :xpath "//div[contains(@class, 'rc-backdrop')]")]
+    (when (boolean back) (click back))))
+
 (defn set-date [id date-str]
   (let [ls    (str/split date-str #" ")
         day   (nth ls 0)
         month (nth ls 1)
         year  (nth ls 2)
         xpath (format "//div[@id = '%s']" id)]
+    (click-backdrop)
     (click (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-dropdown-anchor')]")))
     (let [prev-y (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-prev-year')]"))
           next-y (wait-for-element driver :xpath (str xpath "//div[contains(@class, 'rc-datepicker-next-year')]"))
@@ -48,24 +54,27 @@
       (while (not= (.getText curr) (str month " " year))
         (click prev-m))
       (click (wait-for-element driver :xpath (str xpath "//td[contains(@class, 'rc-datepicker-date') and not(contains(@class, 'rc-datepicker-out-of-focus')) and text()='" day "']")))
-      )))
+      ))
+  (click-backdrop))
 
-(defn fill-input [id value]
-  (set-element driver (get-visible-element driver :id id) value))
+(defmacro fill-input [id value]
+  `(set-element driver (get-visible-element driver :id ~id) ~value))
 
-(defn is-error [id lvl]
-  (boolean (not-empty (.getText (get-element driver :xpath (format "//*[@id='%s']%s/div[contains(@class, 'text-red-400')]" id (apply str (repeat lvl "/.."))))))))
+(defmacro is-error [id lvl]
+  `(boolean (not-empty (.getText (get-element driver :xpath (format "//*[@id='%s']%s/div[contains(@class, 'text-red-400')]" ~id (apply str (repeat ~lvl "/.."))))))))
 
-(defn check-error
-  ([id] (check-error id 1))
+(defmacro check-error
+  ([id] `(check-error ~id 1))
   ([id lvl]
-   (wait-for-element driver :xpath "//button[@id='save-button' and @disabled]")
-   (is (is-error id lvl))))
+   `(do (Thread/sleep 200)
+        (get-visible-element driver :xpath "//button[@id='save-button' and @disabled]")
+        (is (is-error ~id ~lvl)))))
 
-(defn check-valid
-  ([id] (check-valid id 1))
+(defmacro check-valid
+  ([id] `(check-valid ~id 1))
   ([id lvl]
-   (is (not (is-error id lvl)))))
+   `(do (Thread/sleep 200)
+        (is (not (is-error ~id ~lvl))))))
 
 (defn fill-patient [patient]
   (fill-input "name-input" (:name patient))
@@ -77,23 +86,23 @@
 (defn get-count []
   (count (get-elements driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]")))
 
-(defn check-count [count]
-  (is (= count (get-count))))
+(defmacro check-count [count]
+  `(is (= ~count (get-count))))
 
 (defn check-value [id value]
   (wait-for-element driver :xpath (format "//*[@id='%s' and @value='%s']" id value)))
 
-(defn check-sasha []
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))))
+(defmacro check-sasha []
+  `(is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))))
 
-(defn check-no-sasha []
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+(defmacro check-no-sasha []
+  `(is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
 
-(defn check-iuliia []
-  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))))
+(defmacro check-iuliia []
+  `(is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))))
 
-(defn check-no-iuliia []
-  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+(defmacro check-no-iuliia []
+  `(is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
 
 (defn clear-filters []
   (click (get-visible-element driver :id "clear-filters-button")))
@@ -317,12 +326,12 @@
     (check-valid "name-input")
 
     ;; No way to check value of select i guess..
-    (check-valid "gender-select")
+    (check-valid "gender-select" 2)
 
     (click (wait-for-element driver :xpath "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-dropdown-anchor')]"))
     (let [[day month-year] (str/split (:birthdate sasha) #" " 2)]
       (wait-for-element driver :xpath (format "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-month') and text()='%s']" month-year))
-      (wait-for-element driver :xpath (format "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-selected') and text()='%s']" day)))
+      (wait-for-element driver :xpath (format "//div[@id='birthdate-input']//td[contains(@class, 'rc-datepicker-selected') and text()='%s']" day)))
     (check-valid "birthdate-input")
 
     (check-value "address-input" (:address sasha))
@@ -330,10 +339,11 @@
     (check-value "oms-input" (:oms sasha))
     (check-valid "oms-input")
 
-    (let [try-invalid (fn [v] ((fill-input "name-input" v)
-                               (check-error "name-input")
-                               (fill-input "name-input" (:name sasha))
-                               (check-valid "name-input")))]
+    (let [try-invalid (fn [v]
+                        (fill-input "name-input" v)
+                        (check-error "name-input")
+                        (fill-input "name-input" (:name sasha))
+                        (check-valid "name-input"))]
       (try-invalid "")
       (try-invalid "A")
       (try-invalid (apply str (repeat 35 "A")))
@@ -354,10 +364,11 @@
     (fill-input "address-input" (:address sasha))
     (check-valid "address-input")
 
-    (let [try-invalid (fn [v] ((fill-input "oms-input" v)
-                               (check-error "oms-input")
-                               (fill-input "oms-input" (:oms sasha))
-                               (check-valid "oms-input")))]
+    (let [try-invalid (fn [v]
+                        (fill-input "oms-input" v)
+                        (check-error "oms-input")
+                        (fill-input "oms-input" (:oms sasha))
+                        (check-valid "oms-input"))]
       (try-invalid "")
       (try-invalid "123456789")
       (try-invalid "12345678901")
