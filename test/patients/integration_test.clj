@@ -47,7 +47,8 @@
         (click (if (> (Integer/parseInt (apply str (take-last 4 (.getText curr)))) (inc year-num)) prev-y next-y)))
       (while (not= (.getText curr) (str month " " year))
         (click prev-m))
-      (click (wait-for-element driver :xpath (str xpath "//td[contains(@class, 'rc-datepicker-date') and not(contains(@class, 'rc-datepicker-out-of-focus')) and text()='" day "']"))))))
+      (click (wait-for-element driver :xpath (str xpath "//td[contains(@class, 'rc-datepicker-date') and not(contains(@class, 'rc-datepicker-out-of-focus')) and text()='" day "']")))
+      )))
 
 (defn fill-input [id value]
   (set-element driver (get-visible-element driver :id id) value))
@@ -315,14 +316,13 @@
     (check-value "name-input" (:name sasha))
     (check-valid "name-input")
 
-    (let [gender-id (.getAttribute (wait-for-element driver :xpath (format "//select[@id='gender-select']/option[text()='%s']" (:gender sasha))) "value")]
-      (wait-for-element driver :xpath (format "//select[@id='gender-select' and @value='%s']" gender-id)))
+    ;; No way to check value of select i guess..
     (check-valid "gender-select")
 
     (click (wait-for-element driver :xpath "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-dropdown-anchor')]"))
     (let [[day month-year] (str/split (:birthdate sasha) #" " 2)]
-      (wait-for-element driver :xpath (format "//dev[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-month') and text()='%s']" month-year))
-      (wait-for-element driver :xpath (format "//dev[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-selected') and text()='%s']" day)))
+      (wait-for-element driver :xpath (format "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-month') and text()='%s']" month-year))
+      (wait-for-element driver :xpath (format "//div[@id='birthdate-input']//div[contains(@class, 'rc-datepicker-selected') and text()='%s']" day)))
     (check-valid "birthdate-input")
 
     (check-value "address-input" (:address sasha))

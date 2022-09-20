@@ -197,7 +197,7 @@
                  :show-today?   true
                  :start-of-week 0
                  :placeholder   "Date from..."
-                 :format        "yyyy-mm-dd"
+                 :format        "yyyy-MM-dd"
                  :model         filter-birthdate-from
                  :on-change     on-change-birthdate-from]]
                [:div#birthdate-filter-to.mb-1.border-amber-700.border-2.rounded-md
@@ -205,7 +205,7 @@
                  :show-today?   true
                  :start-of-week 0
                  :placeholder   "Date to..."
-                 :format        "yyyy-mm-dd"
+                 :format        "yyyy-MM-dd"
                  :model         filter-birthdate-to
                  :on-change     on-change-birthdate-to]]]]
     [:th.px-2 (filter-input :address {:id "address-filter"})]
@@ -234,9 +234,11 @@
      [:dev.text-2xl.font-bold (gstring/format "Delete patient #%s?" id)]]
     [:hr]
     [:div.flex.justify-end.pt-2
-     (button "Delete" #(delete-patient id get-list) {:data-dismiss "modal"})
+     (button "Delete" #(delete-patient id get-list) {:data-dismiss "modal"
+                                                     :id "delete-confirm-button"})
      (button "Cancel" #(do) {:data-dismiss "modal"
-                             :class "bg-white text-amber-600"})]]])
+                             :class "bg-white text-amber-600"
+                             :id "delete-cancel-button"})]]])
 
 (defn patient-edit-dialog []
   (when @is-edit
@@ -263,7 +265,7 @@
           :show-today?   true
           :start-of-week 0
           :placeholder   "Birthdate..."
-          :format        "yyyy-mm-dd"
+          :format        "yyyy-MM-dd"
           :model         (:birthdate @patient)
           :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]]
         [:div.text-xs.text-red-400 (:birthdate @errors)]]]
