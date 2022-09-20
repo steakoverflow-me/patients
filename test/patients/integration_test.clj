@@ -8,6 +8,8 @@
 
 (use-fixtures :once with-server)
 
+(defonce sleep 1000)
+
 (defonce sasha {:name "Sasha"
                 :gender "Male"
                 :birthdate "27 August 2015"
@@ -60,10 +62,10 @@
   (set-date (:birthdate patient) "//div[@id = 'birthdate-input']"))
 
 (defn get-count []
-  (try
-    (wait-for-element driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]")
-    (count (get-elements driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]"))
-    (catch Exception e (0))))
+  (count (get-elements driver :xpath "//tbody//tr[contains(@class, 'border-amber-500')]")))
+
+(defn fill-input [id value]
+  (set-element driver (get-visible-element driver :id id) value))
 
 (deftest workflow
   (to driver (str "http://localhost:" test-port))
@@ -74,12 +76,14 @@
   (is (nil? (get-visible-element driver :id "save-button")))
   (is (nil? (get-visible-element driver :id "cancel-button")))
 
+  ;; INSERT
+
   (click (get-visible-element driver :id "new-patient-button"))
 
   (fill-patient sasha)
   (click (get-visible-element driver :id "save-button"))
 
-  (Thread/sleep 500)
+  (Thread/sleep sleep)
   (is (nil? (get-visible-element driver :id "save-button")))
   (is (nil? (get-visible-element driver :id "cancel-button")))
 
@@ -90,8 +94,70 @@
   (fill-patient iuliia)
   (click (get-visible-element driver :id "save-button"))
 
-  (Thread/sleep 500)
+  (Thread/sleep sleep)
   (is (nil? (get-visible-element driver :id "save-button")))
   (is (nil? (get-visible-element driver :id "cancel-button")))
 
-  (is (= 2 (get-count))))
+  (is (= 2 (get-count)))
+
+  ;; SEARCH
+
+  (fill-input "search-input" "sk")
+  (Thread/sleep sleep)
+  (is (= 2 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+  (click (get-visible-element driver :id "clear-search-button"))
+
+  (fill-input "search-input" "Sa")
+  (Thread/sleep sleep)
+  (is (= 1 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
+  (click (get-visible-element driver :id "clear-search-button"))
+
+  (fill-input "search-input" "90")
+  (Thread/sleep sleep)
+  (is (= 1 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
+  (click (get-visible-element driver :id "clear-search-button"))
+
+  (fill-input "search-input" "abcde")
+  (Thread/sleep sleep)
+  (is (= 0 (get-count)))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
+  (click (get-visible-element driver :id "clear-search-button"))
+
+  ;; FILTERS
+
+  (Thread/sleep sleep)
+
+  (fill-input "name-filter" "S")
+  (Thread/sleep sleep)
+  (is (= 1 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
+  (click (get-visible-element driver :id "clear-filters-button"))
+
+  (fill-input "name-filter" "I")
+  (Thread/sleep sleep)
+  (is (= 1 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
+  (click (get-visible-element driver :id "clear-filters-button"))
+
+  (fill-input "name-filter" "a")
+  (Thread/sleep sleep)
+  (is (= 2 (get-count)))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+  (is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+  (click (get-visible-element driver :id "clear-filters-button"))
+
+  (fill-input "name-filter" "A")
+  (Thread/sleep sleep)
+  (is (= 0 (get-count)))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))
+  (is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))
+  (click (get-visible-element driver :id "clear-filters-button")))

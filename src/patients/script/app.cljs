@@ -186,7 +186,7 @@
    [:tr.py-2.border-b-2.border-amber-700
     [:th.px-2]
     [:th.px-2 (filter-input :name {:id "name-filter"})]
-    [:th.px-2 [:select#gender-filter.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
+    [:th.px-2 [:select#gender-filter-select.border-amber-700.border-2.rounded {:value (or (:gender_id @filters) "")
                                                           :on-change #(on-change-gender-filter (-> % .-target .-value))}
                [:option {:value ""} "---"]
                (not-empty (for [item @genders]
