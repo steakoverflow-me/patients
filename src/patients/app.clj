@@ -74,7 +74,7 @@
    (:objects (json/read-json (slurp "dev/dataset.json")))))
 
 (defn -main []
-  ;; (if (not= db-structure (db/db-info)) (db/init-database) nil)
+  (if (not= db-structure (db/db-info)) (db/init-database) nil)
 
   ;; (doseq [patient dataset-list] (db/insert! patient))
 

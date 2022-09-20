@@ -37,6 +37,10 @@
 
 (defonce is-edit (r/atom false))
 
+;; For tests
+
+(defonce birthdate-input-datepicker (r/atom nil))
+
 ;; Misc functions
 
 (defn is-numeric-or-special [e]
@@ -318,11 +322,12 @@
   [:div.container.w-full.flex.justify-between.px-0.py-2
    (button "New patient..." on-click-patient-create {:id "new-patient-button"})
    [:div.flex.justify-center
-    [:input.border-amber-700.border-2.rounded.px-2 {:type "text"
+    [:input#search-input.border-amber-700.border-2.rounded.px-2 {:type "text"
                                                     :placeholder "Search..."
                                                     :value @search
                                                     :on-change #(on-change-search  (-> % .-target .-value))}]
-    (button "⌫" on-click-clear-search {:title "Clear search"})]])
+    (button "⌫" on-click-clear-search {:title "Clear search"
+                                       :id "clear-search-button"})]])
 
 (defn app []
   [:div.container.mx-auto.p-4
