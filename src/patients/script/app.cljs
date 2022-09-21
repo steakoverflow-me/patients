@@ -252,7 +252,7 @@
         [:div.flex.justify-center
          [:div.flex.flex-col.justify-center.font-bold "Gender:"]
          [:select#gender-select.border-amber-700.border-2.rounded.m-2 {:value (or (:gender_id @patient) "")
-                                                         :on-change #((swap! patient assoc :gender_id (js/parseInt (-> % .-target .-value)))(validate))}
+                                                                       :on-change #((swap! patient assoc :gender_id (js/parseInt (-> % .-target .-value)))(validate))}
           [:option {:value ""} "---"]
           (not-empty (for [item @genders]
                        [:option {:key (str "gender-id-" (item "id"))
@@ -269,11 +269,11 @@
           :model         (:birthdate @patient)
           :on-change     #((swap! patient assoc :birthdate (ts-to-date %))(validate))]]
         [:div.text-xs.text-red-400 (:birthdate @errors)]]]
-       (form-input :address {:placeholder "Address..." :id "address-input"})
-       (form-input :oms {:placeholder "OMS #"
-                         :id "oms-input"
-                         :on-key-down #(when (not (is-numeric-or-special %))
-                                         (.preventDefault %))})
+      (form-input :address {:placeholder "Address..." :id "address-input"})
+      (form-input :oms {:placeholder "OMS #"
+                        :id "oms-input"
+                        :on-key-down #(when (not (is-numeric-or-special %))
+                                        (.preventDefault %))})
       [:hr]
       [:div.flex.justify-end.pt-2
        (button "Save"
@@ -285,8 +285,7 @@
                    (if (some? (:id @patient))
                      (update-patient @patient callback)
                      (create-patient @patient callback))))
-               {:data-dismiss "modal"
-                :disabled (not-every? nil? (vals @errors))
+               {:disabled (not-every? nil? (vals @errors))
                 :class (when (not-every? nil? (vals @errors)) "bg-amber-200")
                 :id "save-button"})
        (button "Cancel"
@@ -294,8 +293,7 @@
                  (reset! is-edit false)
                  (clear-patient)
                  (clear-patient-errors))
-               {:data-dismiss "modal"
-                :class "bg-white text-amber-600"
+               {:class "bg-white text-amber-600"
                 :id "cancel-button"})]]]))
 
 (defn data-table-actions-cell [id]

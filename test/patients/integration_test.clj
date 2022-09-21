@@ -9,7 +9,10 @@
 
 (use-fixtures :once with-server)
 
-(defonce sleep 1500)
+(defonce sleep (or (System/getenv "TEST_SLEEP")
+                   4000))
+
+(defonce sleep-sm (/ sleep 4))
 
 (defonce sasha {:name "Sasha"
                 :gender "Male"
@@ -17,6 +20,13 @@
                 :birthdate-iso "2015-08-27"
                 :address "Smolensk"
                 :oms "0123456789"})
+
+(defonce aleksandr {:name "Aleksandr"
+                    :gender "Others"
+                    :birthdate "26 July 2022"
+                    :birthdate-iso "2022-07-26"
+                    :address "Universe"
+                    :oms "0000000000"})
 
 (defonce iuliia {:name "Iuliia"
                  :gender "Female"
@@ -29,7 +39,7 @@
 
 (defonce chrome-options (org.openqa.selenium.chrome.ChromeOptions.))
 (.setBinary chrome-options "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe")
-;; (.addArguments chrome-options "headless")
+;;(.addArguments chrome-options "headless")
 (defonce driver {:driver (org.openqa.selenium.chrome.ChromeDriver. chrome-options)})
 
 (defn click-backdrop []
@@ -57,8 +67,11 @@
       ))
   (click-backdrop))
 
-(defmacro fill-input [id value]
-  `(set-element driver (get-visible-element driver :id ~id) ~value))
+(defn fill-input [id value]
+  (let [element (get-element driver :id id)]
+    (if (empty? value)
+      (clear driver element)
+      (set-element driver element value))))
 
 (defmacro is-error [id lvl]
   `(boolean (not-empty (.getText (get-element driver :xpath (format "//*[@id='%s']%s/div[contains(@class, 'text-red-400')]" ~id (apply str (repeat ~lvl "/.."))))))))
@@ -66,14 +79,14 @@
 (defmacro check-error
   ([id] `(check-error ~id 1))
   ([id lvl]
-   `(do (Thread/sleep 200)
+   `(do (Thread/sleep sleep-sm)
         (get-visible-element driver :xpath "//button[@id='save-button' and @disabled]")
         (is (is-error ~id ~lvl)))))
 
 (defmacro check-valid
   ([id] `(check-valid ~id 1))
   ([id lvl]
-   `(do (Thread/sleep 200)
+   `(do (Thread/sleep sleep-sm)
         (is (not (is-error ~id ~lvl))))))
 
 (defn fill-patient [patient]
@@ -92,17 +105,31 @@
 (defn check-value [id value]
   (wait-for-element driver :xpath (format "//*[@id='%s' and @value='%s']" id value)))
 
+(defmacro check-someone [name]
+  (let [xpath (format "//tbody//tr/td[2]/div[text()='%s']" name)]
+  `(is (not (nil? (get-visible-element driver :xpath ~xpath))))))
+
+(defmacro check-no-someone [name]
+  (let [xpath (format "//tbody//tr/td[2]/div[text()='%s']" name)]
+  `(is (nil? (get-visible-element driver :xpath ~xpath)))))
+
 (defmacro check-sasha []
-  `(is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']")))))
+  `(check-someone ~(:name sasha)))
 
 (defmacro check-no-sasha []
-  `(is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']"))))
+  `(check-no-someone ~(:name sasha)))
+
+(defmacro check-aleksandr []
+  `(check-someone ~(:name aleksandr)))
+
+(defmacro check-no-aleksandr []
+  `(check-no-someone ~(:name aleksandr)))
 
 (defmacro check-iuliia []
-  `(is (not (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']")))))
+  `(check-someone ~(:name iuliia)))
 
 (defmacro check-no-iuliia []
-  `(is (nil? (get-visible-element driver :xpath "//tbody//tr/td/div[text() = 'Iuliia']"))))
+  `(check-no-someone ~(:name iuliia)))
 
 (defn clear-filters []
   (click (get-visible-element driver :id "clear-filters-button")))
@@ -310,7 +337,7 @@
   (check-no-iuliia)
   (clear-filters)
 
-  ;; EDIT/VALIDATION
+  ;; VALIDATION
 
   (let [sasha-id (.getText (wait-for-element driver :xpath "//tbody//tr/td/div[text() = 'Sasha']/../../*[1]/div"))
         sasha-edit-button (wait-for-element driver :id (format "edit-patient-%s-button" sasha-id))
@@ -359,10 +386,13 @@
     (set-date "birthdate-input" (:birthdate sasha))
     (check-valid "birthdate-input")
 
-    (fill-input "address-input" "")
-    (check-error "address-input")
-    (fill-input "address-input" (:address sasha))
-    (check-valid "address-input")
+    (let [try-invalid (fn [v]
+                        (fill-input "address-input" v)
+                        (check-error "address-input")
+                        (fill-input "address-input" (:address sasha))
+                        (check-valid "address-input"))]
+      (try-invalid "")
+      (try-invalid (apply str (repeat 150 "A"))))
 
     (let [try-invalid (fn [v]
                         (fill-input "oms-input" v)
@@ -372,5 +402,53 @@
       (try-invalid "")
       (try-invalid "123456789")
       (try-invalid "12345678901")
-      (try-invalid "123456789A"))
-    ))
+      (try-invalid "123A456B7C"))
+
+    ;; EDIT
+
+    (fill-input "name-input" (:name aleksandr))
+    (fill-input "gender-select" (:gender aleksandr))
+    (set-date "birthdate-input" (:birthdate aleksandr))
+    (fill-input "address-input" (:address aleksandr))
+    (fill-input "oms-input" (:oms aleksandr))
+
+    (click (get-visible-element driver :id "save-button"))
+    (Thread/sleep sleep)
+
+    (check-count 2)
+    (check-no-sasha)
+    (check-aleksandr)
+    (check-iuliia)
+
+    ;; DELETE
+
+    (click sasha-delete-button)
+    (Thread/sleep sleep-sm)
+    (is (= 1 (count (get-elements driver :xpath "//div[contains(@class, 'text-lg') and text()='Delete']"))))
+    (click (get-visible-element driver :id "delete-cancel-button"))
+    (Thread/sleep sleep)
+    (is (empty? (get-elements driver :xpath "//div[contains(@class, 'text-lg') and text()='Delete']")))
+    (check-count 2)
+    (check-no-sasha)
+    (check-aleksandr)
+    (check-iuliia)
+
+    (click sasha-delete-button)
+    (Thread/sleep sleep-sm)
+    (click (get-visible-element driver :id "delete-confirm-button"))
+    (Thread/sleep sleep)
+    (check-count 1)
+    (check-no-sasha)
+    (check-no-aleksandr)
+    (check-iuliia)
+
+    (click iuliia-delete-button)
+    (Thread/sleep sleep-sm)
+    (click (get-visible-element driver :id "delete-confirm-button"))
+    (Thread/sleep sleep)
+    (check-count 0)
+    (check-no-sasha)
+    (check-no-aleksandr)
+    (check-no-iuliia))
+
+  (.quit (:driver driver)))
