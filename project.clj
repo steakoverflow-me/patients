@@ -35,7 +35,10 @@
 
   :main patients.app
 
-  :aliases {"testx" ["cloverage" "--runner" :eftest]}
+  :aliases {"unit-tests" ["cloverage"]
+            "integration-tests" ["eftest" "patients.integration.test"]
+
+            "test-all" ["do" "unit-tests" "integration-tests"]}
 
   :profiles {:dev  {:source-paths ["dev"]}
 
@@ -44,9 +47,11 @@
                                    [org.clojure/test.check "1.1.1"]
                                    [io.zonky.test/embedded-postgres "2.0.1"]
                                    [com.google.guava/guava "31.1-jre"]
-                                   [webdriver "0.17.1"]]}}
+                                   [webdriver "0.17.1"]]
+                    :cloverage {:runner :eftest
+                                :test-ns-regex [#"^((?!integration).)*$"]}}}
   :cljsbuild {:builds
-              [{:source-paths ["src/patients/script"]
+              [{:source-paths ["src/patient!s/script"]
                 :jar true
                 :compiler {:main "patients.script.app"
                            :output-dir "resources/public"

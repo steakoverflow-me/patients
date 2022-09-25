@@ -11,9 +11,18 @@
   {:columns (set (j/query pg-uri [sql/db-info-cols]))
    :foregin-keys (set (j/query pg-uri [sql/db-info-fks]))})
 
+(defn drop-tables
+  ([] (drop-tables pg-uri))
+  ([conn] (j/execute! conn sql/drop-tables)))
+
+(defn drop-all
+  "Drops schema 'public' and creates it back. Only for testing purposes!"
+  ([] (drop-all pg-uri))
+  ([conn] (j/execute! conn sql/drop-all)))
+
 (defn init-database []
   (j/with-db-transaction [t-con pg-uri]
-    ;;(j/execute! t-con sql/drop-all)
+    (drop-tables t-con)
     (j/execute! t-con (j/create-table-ddl :genders
                                           [[:id :serial :primary :key]
                                            [:name "VARCHAR(32)"]]))
@@ -23,8 +32,8 @@
                                            [:gender_id :smallint "NOT NULL"]
                                            [:birthdate :date "NOT NULL"]
                                            [:oms       "CHAR(10)" "NOT NULL"]
-                                           [:name      "VARCHAR(128)" "NOT NULL"]
-                                           [:address   :text "NOT NULL"]
+                                           [:name      "VARCHAR(32)" "NOT NULL"]
+                                           [:address   "VARCHAR(128)" "NOT NULL"]
                                            ["FOREIGN KEY(gender_id) REFERENCES genders(id)"]]))))
 
 (defn convert-birthdate-to-local-date [patient]

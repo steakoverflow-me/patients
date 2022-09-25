@@ -35,6 +35,11 @@ CREATE SCHEMA public;
 GRANT ALL ON SCHEMA public TO %s;
 GRANT ALL ON SCHEMA public TO public;" cfg/db-user))
 
+(def drop-tables "
+DROP TABLE IF EXISTS patients CASCADE;
+DROP TABLE IF EXISTS genders CASCADE;
+")
+
 (def list "
 SELECT
     patients.id AS id,

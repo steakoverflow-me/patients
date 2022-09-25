@@ -13,11 +13,11 @@
      (gen/sample (gen/such-that predicate gen/string-alphanumeric) seq-length))))
 
 (defn generate-string-of-length [length]
-  (first (gen/sample (gen/fmap #(apply str %) 
+  (first (gen/sample (gen/fmap #(apply str %)
                                (gen/vector gen/char-alphanumeric length)) 1)))
 
 (defn generate-special-string-of-length [length]
-  (first (gen/sample (gen/fmap #(apply str %) 
+  (first (gen/sample (gen/fmap #(apply str %)
                                (gen/vector (gen/elements "#$%@&^") length)) 1)))
 
 (defn generate-local-date

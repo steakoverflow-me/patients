@@ -47,14 +47,14 @@
    :column_default nil}
   {:table_name "patients",
    :column_name "address",
-   :data_type "text",
-   :character_maximum_length nil,
+   :data_type "character varying",
+   :character_maximum_length 128,
    :is_nullable "NO",
    :column_default nil}
   {:table_name "patients",
    :column_name "name",
    :data_type "character varying",
-   :character_maximum_length 128,
+   :character_maximum_length 32,
    :is_nullable "NO",
    :column_default nil}
   {:table_name "patients",

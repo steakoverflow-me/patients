@@ -16,13 +16,13 @@
         with-spec (str (generate-string-of-length 10)
                        (generate-special-string-of-length 1)
                        (generate-string-of-length 10))
-        valid     (str (generate-string-of-length 10)
+        valid     (str (generate-string-of-length 5)
                        "-"
-                       (generate-string-of-length 10)
+                       (generate-string-of-length 5)
                        " "
-                       (generate-string-of-length 10)
+                       (generate-string-of-length 5)
                        "_"
-                       (generate-string-of-length 10))]
+                       (generate-string-of-length 5))]
     (is (some? (v/validate-name empty-str)))
     (is (some? (v/validate-name too-short)))
     (is (some? (v/validate-name too-long)))
@@ -69,7 +69,7 @@
                  :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
-        valid   {:name      (generate-string-of-length (inc (rand-int 128)))
+        valid   {:name      (generate-string-of-length (+ 2 (rand-int 30)))
                  :gender_id (inc (rand-int 10))
                  :birthdate (generate-local-date)
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
@@ -84,7 +84,7 @@
                  :birthdate (ld/parse "2050-01-01")
                  :address   ""
                  :oms       (generate-string-of-length 10)}
-        valid   {:name      (generate-string-of-length (inc (rand-int 127)))
+        valid   {:name      (generate-string-of-length (+ 2 (rand-int 30)))
                  :gender_id (inc (rand-int 10))
                  :birthdate (generate-local-date)
                  :address   (generate-special-string-of-length (+ 50 (rand-int 50)))
