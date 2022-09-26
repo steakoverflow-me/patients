@@ -17,9 +17,9 @@ jobs:
         sudo apt install npm leiningen wget
     - name: Install Google Chrome
       run: |
-        wget https://www.slimjet.com/chrome/download-chrome.php?file=files%2F90.0.4430.72%2Fgoogle-chrome-stable_current_amd64.deb
-        sudo dpkg -i google-chrome-stable_current_amd64.deb
-        rm google-chrome-stable_current_amd64.deb
+        wget https://www.slimjet.com/chrome/download-chrome.php?file=files%2F90.0.4430.72%2Fgoogle-chrome-stable_current_amd64.deb -O chrome92.deb
+        sudo dpkg -i chrome92.deb
+        rm chrome92.deb
         sudo apt-get install -f
         google-chrome --version
     - name: Install Chromedriver
@@ -34,8 +34,10 @@ jobs:
       run: npm install
     - name: Install dependencies
       run: lein deps
-    - name: Run tests
+    - name: Run unit tests
+      run: lein unit-tests
+    - name: Run integration tests
       run: |
         export TEST_CHROME_BINARY=$(which google-chrome)
         export TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
-        lein test-all
+        lein integration-tests
