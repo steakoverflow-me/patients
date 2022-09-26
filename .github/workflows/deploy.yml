@@ -36,6 +36,6 @@ jobs:
       run: lein deps
     - name: Run tests
       run: |
-        TEST_CHROME_BINARY=$(which google-chrome)
-        TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
+        export TEST_CHROME_BINARY=$(which google-chrome)
+        export TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
         lein test-all
