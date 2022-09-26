@@ -10,7 +10,9 @@
 (use-fixtures :once with-server)
 
 (defonce sleep (or (System/getenv "TEST_SLEEP")
-                   1000))
+                   5000))
+
+(defonce sleep-sm (/ sleep 4))
 
 (defonce headless (nil? (System/getenv "TEST_NOT_HEADLESS")))
 
@@ -19,8 +21,6 @@
 
 (defonce chrome-binary (or (System/getenv "TEST_CHROME_BINARY")
                            "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe"))
-
-(defonce sleep-sm (/ sleep 4))
 
 (defonce sasha {:name "Sasha"
                 :gender "Male"

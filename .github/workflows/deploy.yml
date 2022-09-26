@@ -1,0 +1,42 @@
+name: Deploy CI
+
+on:
+  push:
+    branches: [ "deploy" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Install software
+      run: |
+        apt update
+        apt install npm leiningen wget
+    - name: Install Google Chrome
+      run: |
+        wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+        dpkg -i google-chrome-stable_current_amd64.deb
+        rm google-chrome-stable_current_amd64.deb
+        apt-get install -f
+        google-chrome --version
+    - name: Install Chromedriver
+      run: |
+        wget https://chromedriver.storage.googleapis.com/92.0.4515.107/chromedriver_linux64.zip
+        unzip chromedriver_linux64.zip
+        rm chromedriver_linux64.zip
+        mv chromedriver /usr/bin/chromedriver
+        chown root:root /usr/bin/chromedriver
+        sudo chmod +x /usr/bin/chromedriver
+    - name: Set test environment variables
+      run: |
+        export TEST_CHROME_BINARY=$(which google-chrome)
+        export TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
+    - name: Install node_modules
+      run: npm install
+    - name: Install dependencies
+      run: lein deps
+    - name: Run tests
+      run: lein test-all

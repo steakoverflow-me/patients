@@ -38,7 +38,7 @@
   :aliases {"unit-tests" ["cloverage"]
             "integration-tests" ["eftest" "patients.integration.test"]
 
-            "test-all" ["do" "unit-tests" "integration-tests"]}
+            "test-all" ["do" ["unit-tests"] ["integration-tests"]]}
 
   :profiles {:dev  {:source-paths ["dev"]}
 
