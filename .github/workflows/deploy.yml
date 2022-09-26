@@ -30,13 +30,12 @@ jobs:
         sudo mv chromedriver /usr/bin/chromedriver
         sudo chown $(whoami) /usr/bin/chromedriver
         sudo chmod +x /usr/bin/chromedriver
-    - name: Set test environment variables
-      run: |
-        TEST_CHROME_BINARY=$(which google-chrome)
-        TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
     - name: Install node_modules
       run: npm install
     - name: Install dependencies
       run: lein deps
     - name: Run tests
-      run: lein test-all
+      run: |
+        TEST_CHROME_BINARY=$(which google-chrome)
+        TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
+        lein test-all
