@@ -17,11 +17,10 @@ jobs:
         sudo apt install npm leiningen wget
     - name: Install Google Chrome
       run: |
-        wget https://www.slimjet.com/chrome/download-chrome.php?file=files%2F90.0.4430.72%2Fgoogle-chrome-stable_current_amd64.deb -O chrome92.deb
-        sudo dpkg -i chrome92.deb
-        rm chrome92.deb
-        sudo apt-get install -f
-        google-chrome --version
+        wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
+        sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
+        sudo apt update
+        sudo apt install google-chrome-stable=92.0.4515.159-1
     - name: Install Chromedriver
       run: |
         wget https://chromedriver.storage.googleapis.com/92.0.4515.107/chromedriver_linux64.zip
