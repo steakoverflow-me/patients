@@ -32,8 +32,8 @@ jobs:
         sudo chmod +x /usr/bin/chromedriver
     - name: Set test environment variables
       run: |
-        export TEST_CHROME_BINARY=$(which google-chrome)
-        export TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
+        TEST_CHROME_BINARY=$(which google-chrome)
+        TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
     - name: Install node_modules
       run: npm install
     - name: Install dependencies
