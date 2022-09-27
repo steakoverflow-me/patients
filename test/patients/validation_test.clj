@@ -47,7 +47,7 @@
 
 (deftest address-validate-test
   (let [invalid-1 ""
-        invalid-2 (generate-string-of-length (+ 128 (rand-int 100)))
+        invalid-2 (generate-string-of-length (+ 130 (rand-int 100)))
         valid   (generate-string-of-length (+ 28 (rand-int 100)))]
     (is (some? (v/validate-address invalid-1)))
     (is (some? (v/validate-address invalid-2)))
