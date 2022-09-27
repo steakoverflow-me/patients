@@ -69,7 +69,7 @@ jobs:
     #- name: Adding Known Hosts
     #  run: ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     - name: Copy uberjar
-      run: scp patients.jar root@${{ secrets.HOST }}/var/local/
+      run: scp patients.jar root@${{ secrets.HOST }}/var/local/patients.jar
     - name: Set up environment variables
       run: |
         ssh root@${{ secrets.HOST }} "export DB_USER=${{ secrets.DB_USER }}"
