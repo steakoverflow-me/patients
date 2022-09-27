@@ -41,8 +41,8 @@
             "test-all" ["do" ["unit-tests"] ["integration-tests"]]}
 
   :profiles {:uberjar {:main           patients.app
-                       :aot            :all
-                       :resource-paths ["resources/"]
+                       :aot            [patients.app]
+                       :resource-paths ["resources/public"]
                        :uberjar-name   "patients.jar"
                        :prep-tasks     ["compile"]}
 
