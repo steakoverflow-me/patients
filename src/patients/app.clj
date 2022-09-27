@@ -73,7 +73,7 @@
      (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
            db/convert-birthdate-to-local-date)
      (:objects (json/read-json (slurp "dev/dataset.json"))))
-    (catch Exception e [])
+    (catch Exception e [])))
 
 (defn -main []
   (if (not= db-structure (db/db-info)) (db/init-database) nil)
