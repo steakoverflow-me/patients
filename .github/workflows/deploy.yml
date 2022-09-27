@@ -76,6 +76,6 @@ jobs:
         ssh root@${{ secrets.HOST }} "export DB_PORT="
         ssh root@${{ secrets.HOST }} "export DB_NAME=${{ secrets.DB_NAME }}"
     - name: "Kill old process"
-      run: ssh root@${{ secrets.HOST }} "killall -9 java"
+      run: ssh root@${{ secrets.HOST }} "killall -9 -qw java"
     - name: Run server
       run: ssh root@${{ secrets.HOST }} "java -jar /var/local/patients.jar"
