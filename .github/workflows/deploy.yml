@@ -78,4 +78,4 @@ jobs:
     - name: "Kill old process"
       run: ssh root@${{ secrets.HOST }} "killall -9w java || true"
     - name: Run server
-      run: ssh root@${{ secrets.HOST }} "java -jar /var/local/patients.jar"
+      run: ssh root@${{ secrets.HOST }} "java -jar /var/local/patients.jar | tee /var/local/patients.log &"
