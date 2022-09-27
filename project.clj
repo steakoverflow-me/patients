@@ -42,7 +42,7 @@
 
   :profiles {:uberjar {:main           patients.app
                        :aot            :all
-                       :resource-paths ["resources/public/out"]
+                       :resource-paths ["resources/"]
                        :uberjar-name   "patients.jar"
                        :prep-tasks     ["compile"]}
 
