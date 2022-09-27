@@ -42,3 +42,39 @@ jobs:
 #        export TEST_CHROME_BINARY=$(which google-chrome)
 #        export TEST_CHROMEDRIVER_BINARY=/usr/bin/chromedriver
 #        lein integration-tests
+
+    - name: Create uberjar
+      run: lein uberjar
+    - uses: actions/upload-artifact@v2
+      with:
+        name: uberjar
+        path: target/patients.jar
+
+  deploy:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/download-artifact@v2
+      with:
+        name: uberjar
+    - name: Install SSH Key
+      uses: shimataro/ssh-key-action@v2
+      with:
+        key: ${{ secrets.DEV_SSH_PRIVATE }}
+    - name: Adding Known Hosts
+      run: ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+    - name: Copy uberjar
+      run: scp target/patients.jar root@${{ secrets.HOST }}/var/local/
+    - name: Set up environment variables
+      run: |
+        ssh root@${{ secrets.HOST }} "export DB_USER=${{ secrets.DB_USER }}"
+        ssh root@${{ secrets.HOST }} "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
+        ssh root@${{ secrets.HOST }} "export DB_HOST=${{ secrets.DB_HOST }}"
+        ssh root@${{ secrets.HOST }} "export DB_PORT="
+        ssh root@${{ secrets.HOST }} "export DB_NAME=${{ secrets.DB_NAME }}"
+    - name: "Kill old process"
+      run: ssh root@${{ secrets.HOST }} "killall -9 java"
+    - name: Run server
+      run: ssh root@${{ secrets.HOST }} "java -jar /var/local/patients.jar"

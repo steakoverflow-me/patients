@@ -14,7 +14,8 @@
    [compojure.core :refer [GET POST PUT DELETE ANY defroutes routes]]
    [compojure.route :as route]
    [compojure.handler :as handler]
-   [clojure.stacktrace :refer [print-stack-trace]]))
+   [clojure.stacktrace :refer [print-stack-trace]])
+  (:gen-class))
 
 (defn page-404 [request]
   {:status 404

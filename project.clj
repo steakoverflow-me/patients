@@ -40,16 +40,21 @@
 
             "test-all" ["do" ["unit-tests"] ["integration-tests"]]}
 
-  :profiles {:dev  {:source-paths ["dev"]}
+  :profiles {:uberjar {:main         patients.app
+                       :aot          :all
+                       :uberjar-name "patients.jar"
+                       :prep-tasks   ["compile"]}
 
-             :test {:dependencies [[clj-http "3.12.3"]
-                                   [eftest "0.5.9"]
-                                   [org.clojure/test.check "1.1.1"]
-                                   [io.zonky.test/embedded-postgres "2.0.1"]
-                                   [com.google.guava/guava "31.1-jre"]
-                                   [webdriver "0.17.1"]]
-                    :cloverage {:runner :eftest
-                                :test-ns-regex [#"^((?!integration).)*$"]}}}
+             :dev     {:source-paths ["dev"]}
+
+             :test    {:dependencies [[clj-http "3.12.3"]
+                                      [eftest "0.5.9"]
+                                      [org.clojure/test.check "1.1.1"]
+                                      [io.zonky.test/embedded-postgres "2.0.1"]
+                                      [com.google.guava/guava "31.1-jre"]
+                                      [webdriver "0.17.1"]]
+                       :cloverage {:runner :eftest
+                                   :test-ns-regex [#"^((?!integration).)*$"]}}}
   :cljsbuild {:builds
               [{:source-paths ["src/patient!s/script"]
                 :jar true
