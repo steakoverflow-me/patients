@@ -22,7 +22,7 @@ jobs:
     - name: Run unit tests
       run: lein unit-tests
 
-# Integration tests not working in github actions environment. Decided to switch them off and not dive in deeper...
+# Integration tests not working in github actions environment. Decided to switch them off and not to dive deeply...
 #
 #    - name: Run integration tests
 #      run: |
@@ -67,7 +67,7 @@ jobs:
         key: ${{ secrets.DEV_SSH_PRIVATE }}
         known_hosts: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
     - name: Copy uberjar
-      run: scp patients.jar root@${{ secrets.HOST }}/var/local/patients.jar
+      run: scp patients.jar root@${{ secrets.HOST }}:/var/local/patients.jar
     - name: Set up environment variables
       run: |
         ssh root@${{ secrets.HOST }} "export DB_USER=${{ secrets.DB_USER }}"
