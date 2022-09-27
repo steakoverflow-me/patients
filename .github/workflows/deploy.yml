@@ -69,11 +69,4 @@ jobs:
     - name: Copy uberjar
       run: scp patients.jar root@${{ secrets.HOST }}:/var/local/patients.jar
     - name: Set up environment variables and rerun server
-      run: |
-        ssh root@${{ secrets.HOST }} "export DB_USER=${{ secrets.DB_USER }}"
-        ssh root@${{ secrets.HOST }} "export DB_PASSWORD=${{ secrets.DB_PASSWORD }}"
-        ssh root@${{ secrets.HOST }} "export DB_HOST=${{ secrets.DB_HOST }}"
-        ssh root@${{ secrets.HOST }} "export DB_PORT="
-        ssh root@${{ secrets.HOST }} "export DB_NAME=${{ secrets.DB_NAME }}"
-        ssh root@${{ secrets.HOST }} "killall -9w java || true"
-        ssh root@${{ secrets.HOST }} "DB_USER=${{ secrets.DB_USER }} DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_HOST=${{ secrets.DB_HOST }} DB_PORT='' DB_NAME=${{ secrets.DB_NAME }} supervisorctl restart patients || supervisoctl start patients"
+      run: ssh root@${{ secrets.HOST }} "DB_USER=${{ secrets.DB_USER }} DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_HOST=${{ secrets.DB_HOST }} DB_PORT='' DB_NAME=${{ secrets.DB_NAME }} supervisorctl restart patients || supervisorctl start patients"
