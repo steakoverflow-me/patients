@@ -63,8 +63,9 @@ jobs:
       uses: shimataro/ssh-key-action@v2
       with:
         key: ${{ secrets.DEV_SSH_PRIVATE }}
-    - name: Adding Known Hosts
-      run: ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+        known-hosts: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
+    #- name: Adding Known Hosts
+    #  run: ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
     - name: Copy uberjar
       run: scp target/patients.jar root@${{ secrets.HOST }}/var/local/
     - name: Set up environment variables
