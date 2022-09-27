@@ -40,7 +40,6 @@
           body (or (:body resp) {:result "OK"})
           body-resp (assoc resp :body body)
           headers-resp (assoc-in body-resp [:headers "Content-Type"] "application/json")]
-      ;; (println (str "RESP:\t" headers-resp))
       headers-resp)))
 
 (defn do-validated [f patient]
@@ -69,14 +68,17 @@
   (routes static (wrap-content-json (wrap-json-body (wrap-json-response (wrap-defaults api api-defaults)) {:keywords? true}))))
 
 (def dataset-list
-  (map
-   (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
-         db/convert-birthdate-to-local-date)
-   (:objects (json/read-json (slurp "dev/dataset.json")))))
+  (try
+    (map
+     (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
+           db/convert-birthdate-to-local-date)
+     (:objects (json/read-json (slurp "dev/dataset.json"))))
+    (catch Exception e [])
 
 (defn -main []
   (if (not= db-structure (db/db-info)) (db/init-database) nil)
 
+  ;; Uncomment this line to populate database for development purposes
   ;; (doseq [patient dataset-list] (db/insert! patient))
 
   (run-jetty app {:port 8080 :join? true}))
