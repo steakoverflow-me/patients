@@ -40,10 +40,11 @@
 
             "test-all" ["do" ["unit-tests"] ["integration-tests"]]}
 
-  :profiles {:uberjar {:main         patients.app
-                       :aot          :all
-                       :uberjar-name "patients.jar"
-                       :prep-tasks   ["compile"]}
+  :profiles {:uberjar {:main           patients.app
+                       :aot            :all
+                       :resource-paths ["resources/public/out"]
+                       :uberjar-name   "patients.jar"
+                       :prep-tasks     ["compile" "cljsbuild"]}
 
              :dev     {:source-paths ["dev"]}
 
