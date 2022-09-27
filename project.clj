@@ -58,7 +58,7 @@
                        :cloverage {:runner :eftest
                                    :test-ns-regex [#"^((?!integration).)*$"]}}}
   :cljsbuild {:builds
-              [{:source-paths ["src/patient!s/script"]
+              [{:source-paths ["src/patients/script"]
                 :jar true
                 :compiler {:main "patients.script.app"
                            :output-dir "resources/public"
