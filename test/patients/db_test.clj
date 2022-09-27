@@ -69,7 +69,7 @@
   (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 2)))]
     (doseq [s strs]
       (let [result (db/list-filtered {:q s})
-            result-strs (map #(str/join "\n" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)]
+            result-strs (map #(str/join "|" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)]
         (is (every? #(str/includes? % s) result-strs)))))
 
   (let [id (+ 102 (rand-int 1000))]
