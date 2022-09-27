@@ -44,7 +44,7 @@
                        :aot            :all
                        :resource-paths ["resources/public/out"]
                        :uberjar-name   "patients.jar"
-                       :prep-tasks     ["compile" "cljsbuild"]}
+                       :prep-tasks     ["compile" "cljsbuild once"]}
 
              :dev     {:source-paths ["dev"]}
 
