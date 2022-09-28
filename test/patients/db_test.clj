@@ -73,7 +73,7 @@
             valid? (every? #(str/includes? % s) result-strs)]
         (when (not valid?) (do (println (str "S:\t" s))
                                (println (str "STRS:\t" (vec result-strs)))))
-        (is valid?))
+        (is valid?))))
 
   (let [id (+ 102 (rand-int 1000))]
     (is (nil? (first (db/get-one id)))))
