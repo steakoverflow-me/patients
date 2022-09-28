@@ -42,13 +42,17 @@
           headers-resp (assoc-in body-resp [:headers "Content-Type"] "application/json")]
       headers-resp)))
 
-(defn do-validated [f patient]
+(defn do-validated
+  "Running function only if argument is a valid patient. Else returns 400 with information about validation errors"
+  [f patient]
   (let [result (validate patient)]
     (if (empty? result)
       (f patient)
       (bad-request (json/write-str (join "\n" result))))))
 
-(defn prepare-patient [p]
+(defn prepare-patient
+  "Preparing patient to insert in database. Particulary parsing birthdate string"
+  [p]
   (if (string? (:birthdate p)) (update p :birthdate #(ld/parse % basic-iso-date)) p))
 
 (defroutes api

@@ -36,12 +36,6 @@
                                            [:address   "VARCHAR(128)" "NOT NULL"]
                                            ["FOREIGN KEY(gender_id) REFERENCES genders(id)"]]))))
 
-(defn convert-birthdate-to-local-date [patient]
-  (update patient :birthdate (fn [bd-in]
-                               (let [bd-in (patient :birthdate)
-                                     bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
-                                 (ld/parse bd)))))
-
 (defn get-one [id]
   (j/query pg-uri [sql/get id]))
 

@@ -37,10 +37,6 @@
 
 (defonce is-edit (r/atom false))
 
-;; For tests
-
-(defonce birthdate-input-datepicker (r/atom nil))
-
 ;; Misc functions
 
 (defn is-numeric-or-special [e]
@@ -82,6 +78,9 @@
   (reset! errors patient-init))
 
 ;; API functions
+
+(defn error-handler [e]
+  (rmodals/modal! (notification (gstring/unescapeEntities (or (:status-text e) "Error")) (gstring/unescapeEntities (or (:response e) "No information :(")))))
 
 (defn get-list
   ([] (get-list (get-filters)))
@@ -126,10 +125,6 @@
     (reset! errors es)))
 
 ;; Event handler functions
-
-(defn error-handler [e]
-  (println "error-handler" e)
-  (rmodals/modal! (notification (gstring/unescapeEntities (or (:status-text e) "Error")) (gstring/unescapeEntities (or (:response e) "No information :(")))))
 
 (defn on-change-gender-filter [gender-id]
   (swap! filters assoc :gender_id gender-id)

@@ -14,7 +14,7 @@
 
 (defonce sleep-sm (/ sleep 4))
 
-(defonce headless (nil? (System/getenv "TEST_NOT_HEADLESS")))
+(defonce headless? (nil? (System/getenv "TEST_NOT_HEADLESS")))
 
 (defonce chromedriver-binary (or (System/getenv "TEST_CHROMEDRIVER_BINARY")
                                  "D:\\dev\\chromedriver.exe"))
@@ -47,14 +47,18 @@
 
 (defonce chrome-options (org.openqa.selenium.chrome.ChromeOptions.))
 (.setBinary chrome-options chrome-binary)
-(.setHeadless chrome-options headless)
+(.setHeadless chrome-options headless?)
 (defonce driver {:driver (org.openqa.selenium.chrome.ChromeDriver. chrome-options)})
 
-(defn click-backdrop []
+(defn click-backdrop
+  "Click overlay to close datepicker dropdown"
+  []
   (let [back (get-element driver :xpath "//div[contains(@class, 'rc-backdrop')]")]
     (when (boolean back) (click back))))
 
-(defn set-date [id date-str]
+(defn set-date
+  "Set date on specific datepicker with emulating human behaviour"
+  [id date-str]
   (let [ls    (str/split date-str #" ")
         day   (nth ls 0)
         month (nth ls 1)
@@ -85,6 +89,7 @@
   `(boolean (not-empty (.getText (get-element driver :xpath (format "//*[@id='%s']%s/div[contains(@class, 'text-red-400')]" ~id (apply str (repeat ~lvl "/.."))))))))
 
 (defmacro check-error
+  "Check is error displayed for certain input. lvl describes how much levels up you need go in DOM"
   ([id] `(check-error ~id 1))
   ([id lvl]
    `(do (Thread/sleep sleep-sm)
@@ -115,11 +120,15 @@
   (wait-for-element driver :xpath (format "//*[@id='%s' and @value='%s']" id value)))
 
 ;; Some problems with big XPath to check all columns... let it be simplified only by name
-(defmacro check-someone [name]
+(defmacro check-someone
+  "Check if someones name appears in table"
+  [name]
   (let [xpath (format "//tbody//tr/td[2]/div[text()='%s']" name)]
   `(is (not (nil? (get-visible-element driver :xpath ~xpath))))))
 
-(defmacro check-no-someone [name]
+(defmacro check-no-someone
+  "Check if someones name NOT appears in table"
+  [name]
   (let [xpath (format "//tbody//tr/td[2]/div[text()='%s']" name)]
   `(is (nil? (get-visible-element driver :xpath ~xpath)))))
 
