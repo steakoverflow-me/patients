@@ -7,7 +7,7 @@ SELECT table_name, column_name, data_type, character_maximum_length, is_nullable
 WHERE table_name IN
     (SELECT table_name
          FROM information_schema.tables
-     WHERE table_schema = 'public');")
+     WHERE table_schema = 'public' AND table_name <> 'pg_state_statements');")
 
 (def db-info-fks "
 SELECT
@@ -27,7 +27,7 @@ FROM
 WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name IN
     (SELECT table_name
          FROM information_schema.tables
-     WHERE table_schema = 'public');")
+     WHERE table_schema = 'public' AND table_name <> 'pg_state_statements');")
 
 (def drop-all (format "
 DROP SCHEMA public CASCADE;
