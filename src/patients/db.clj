@@ -68,7 +68,6 @@
                     (when (not-empty (:oms filters)) (format "\nAND patients.oms LIKE '%%%s%%'" (:oms filters)))
                     (when (not-empty (:q filters)) (format "\nAND CONCAT(patients.name, '\n', patients.birthdate, '\n', patients.address, '\n', patients.oms, '\n', CONCAT_WS('-', SUBSTRING(patients.oms, 1, 3), SUBSTRING(patients.oms, 4, 3), SUBSTRING(patients.oms, 7, 3), SUBSTRING(patients.oms, 10, 1))) LIKE '%%%s%%'" (:q filters)))
                     "\nORDER BY patients.id;")]
-    (println (str "WHERES:\t" wheres))
     (j/query pg-uri (str sql/list " WHERE 1 = 1 " wheres ";"))))
 
 (defn get-genders []
