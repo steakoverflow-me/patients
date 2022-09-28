@@ -69,8 +69,11 @@
   (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 1 3)))]
     (doseq [s strs]
       (let [result (db/list-filtered {:q s})
-            result-strs (map #(str/join "|" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)]
-        (is (if (every? #(str/includes? % s) result-strs) true (do (println (str "S:\t" s)) (println (str "RSTRS:\t" result-strs)) false))))))
+            result-strs (map #(str/join "|" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)
+            valid? (every? #(str/includes? % s) result-strs)]
+        (when (not valid?) (do (println (str "S:\t" s))
+                               (println (str "STRS:\t" (vec result-strs)))))
+        (is valid?))
 
   (let [id (+ 102 (rand-int 1000))]
     (is (nil? (first (db/get-one id)))))
