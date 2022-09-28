@@ -68,5 +68,19 @@ jobs:
         known_hosts: ${{ secrets.DEV_SSH_KNOWN_HOSTS }}
     - name: Copy uberjar
       run: scp patients.jar root@${{ secrets.HOST }}:/var/local/patients.jar
-    - name: Set up environment variables and rerun server
-      run: ssh root@${{ secrets.HOST }} "DB_USER=${{ secrets.DB_USER }} DB_PASSWORD=${{ secrets.DB_PASSWORD }} DB_HOST=${{ secrets.DB_HOST }} DB_PORT='' DB_NAME=${{ secrets.DB_NAME }} supervisorctl restart patients || supervisorctl start patients"
+    - name: Set up supervisor config
+      run: |
+        ssh root@${{ secrets.HOST }} "echo '[program:patients]' > /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\ncommand=java -jar /var/local/patients.jar' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\nstdout_logfile=/var/local/patients.log' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\nstderr_logfile=/var/local/patients.err' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\nenvironment=' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\n    DB_USER="${{ secrets.DB_USER }}"' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\n    DB_PASSWORD="${{ secrets.DB_PASSWORD }}"' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\n    DB_HOST="${{ secrets.DB_HOST }}"' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\n    DB_PORT=""' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo $'\n    DB_NAME="${{ secrets.DB_NAME }}"' >> /etc/supervisor/conf.d/patients.conf"
+    - name: Reload config and rerun server
+      run: |
+        ssh root@${{ secrets.HOST }} "supervisorctl reload"
+        ssh root@${{ secrets.HOST }} "supervisorctl restart patients || supervisorctl start patients"
