@@ -74,12 +74,7 @@ jobs:
         ssh root@${{ secrets.HOST }} "echo atu'command=java -jar /var/local/patients.jar' >> /etc/supervisor/conf.d/patients.conf"
         ssh root@${{ secrets.HOST }} "echo 'stdout_logfile=/var/local/patients.log' >> /etc/supervisor/conf.d/patients.conf"
         ssh root@${{ secrets.HOST }} "echo 'stderr_logfile=/var/local/patients.err' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo 'environment=' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo '    DB_USER=\"${{ secrets.DB_USER }}\",' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo '    DB_PASSWORD=\"${{ secrets.DB_PASSWORD }}\",' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo '    DB_HOST=\"${{ secrets.DB_HOST }}\",' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo '    DB_PORT=\"\",' >> /etc/supervisor/conf.d/patients.conf"
-        ssh root@${{ secrets.HOST }} "echo '    DB_NAME=\"${{ secrets.DB_NAME }}\"' >> /etc/supervisor/conf.d/patients.conf"
+        ssh root@${{ secrets.HOST }} "echo 'environment=DB_USER=\"${{ secrets.DB_USER }}\",DB_PASSWORD=\"${{ secrets.DB_PASSWORD }}\",DB_HOST=\"${{ secrets.DB_HOST }}\",DB_PORT=\"\",DB_NAME=\"${{ secrets.DB_NAME }}\"' >> /etc/supervisor/conf.d/patients.conf"
     - name: Reload config and rerun server
       run: |
         ssh root@${{ secrets.HOST }} "supervisorctl reload"
