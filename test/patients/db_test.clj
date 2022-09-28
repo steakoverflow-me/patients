@@ -1,5 +1,6 @@
 (ns patients.db-test
   (:require
+   [patients.app :refer [dataset-list]]
    [patients.db :as db]
    [patients.config :refer [db-structure]]
    [clojure.java.jdbc :as j]
@@ -11,12 +12,6 @@
    [clojure.test :refer [deftest use-fixtures is]]
    [clojure.test.check.generators :as gen]
    [patients.common-test :refer [generate-string-except generate-local-date]]))
-
-(def dataset-list
-  (map
-   (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
-         db/convert-birthdate-to-local-date)
-   (:objects (json/read-json (slurp "dev/dataset.json")))))
 
 (use-fixtures :each with-db)
 
