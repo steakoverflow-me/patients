@@ -76,7 +76,11 @@
     (catch Exception e [])))
 
 (defn -main []
-  (if (not= db-structure (db/db-info)) (db/init-database) nil)
+  (when (not= db-structure (db/db-info))
+    (do
+      (println (str "EXPECTED:\n" db-structure))
+      (println (str "ACTUAL:\n" (db/db-info)))
+      (db/init-database)))
 
   ;; Uncomment this line to populate database for development purposes
   ;; (doseq [patient dataset-list] (db/insert! patient))
