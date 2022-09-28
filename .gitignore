@@ -9,7 +9,7 @@ debug*
 resources/public/**
 !resources/public/assets
 !resources/public/index.html
-!resources/public/favicon.jpg
+!resources/public/favicon.ico
 
 target/
 node_modules/

@@ -52,13 +52,18 @@
   (if (string? (:birthdate p)) (update p :birthdate #(ld/parse % basic-iso-date)) p))
 
 (defroutes api
-  (GET    "/patients"                      {params :params} (db/list-filtered params))
-  (GET    ["/patients/:id", :id #"[0-9]+"] [id]             (db/get-one (Integer/parseInt id)))
-  (POST   "/patients"                      req (do-validated db/insert! 
-															 (prepare-patient (:body req))))
-  (PUT    ["/patients/:id", :id #"[0-9]+"] req (do-validated db/update!
-                                                             (prepare-patient (assoc (:body req) :id (Integer/parseInt (get-in req [:params :id]))))))
-  (DELETE ["/patients/:id", :id #"[0-9]+"] [id]             (db/delete! (Integer/parseInt id)))
+  (GET    "/patients"                      {params :params}
+          (db/list-filtered params))
+  (GET    ["/patients/:id", :id #"[0-9]+"] [id]
+          (db/get-one (Integer/parseInt id)))
+  (POST   "/patients"                      req
+          (do-validated db/insert!
+                        (prepare-patient (:body req))))
+  (PUT    ["/patients/:id", :id #"[0-9]+"] req
+          (do-validated db/update!
+                        (prepare-patient (assoc (:body req) :id (Integer/parseInt (get-in req [:params :id]))))))
+  (DELETE ["/patients/:id", :id #"[0-9]+"] [id]
+          (db/delete! (Integer/parseInt id)))
 
   (GET "/genders" [] (db/get-genders))
 
