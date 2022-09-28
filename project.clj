@@ -56,6 +56,7 @@
                                       [com.google.guava/guava "31.1-jre"]
                                       [webdriver "0.17.1"]]
                        :cloverage {:runner :eftest
+                                   :runner-opts {:fail-fast? true}
                                    :test-ns-regex [#"^((?!integration).)*$"]}}}
   :cljsbuild {:builds
               [{:source-paths ["src/patients/script"]

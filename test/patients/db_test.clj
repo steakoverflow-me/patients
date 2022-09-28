@@ -49,8 +49,8 @@
       (is (every? #(str/includes? (:name %) s) (db/list-filtered {:name s})))
       (is (every? #(str/includes? (:address %) s) (db/list-filtered {:address s})))))
 
-  (let [strs1 (flatten (repeatedly 10 #(generate-string-except [""] 1)))
-        strs2 (flatten (repeatedly 10 #(generate-string-except [""] 1)))
+  (let [strs1 (flatten (repeatedly 10 #(generate-string-except [""] 1 3)))
+        strs2 (flatten (repeatedly 10 #(generate-string-except [""] 1 3)))
         strs (map vector strs1 strs2)]
     (doseq [ss strs]
       (is (every? #(and (str/includes? (:name %) (first ss))
@@ -66,7 +66,7 @@
                           (<= (compare (:birthdate %) dmax) 0))
                     (db/list-filtered {"birthdate[from]" dmin "birthdate[to]" dmax}))))))
 
-  (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 2)))]
+  (let [strs (flatten (repeatedly 10 #(generate-string-except [""] 1 3)))]
     (doseq [s strs]
       (let [result (db/list-filtered {:q s})
             result-strs (map #(str/join "|" [(:name %) (:birthdate %) (:address %) (:oms %)]) result)]
