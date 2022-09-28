@@ -69,7 +69,7 @@ jobs:
     - name: Copy uberjar
       run: scp patients.jar root@${{ secrets.HOST }}:/var/local/patients.jar
     - name: Set up supervisor config
-      run: |e
+      run: |
         ssh root@${{ secrets.HOST }} "echo '[program:patients]' > /etc/supervisor/conf.d/patients.conf"
         ssh root@${{ secrets.HOST }} "echo 'command=java -jar /var/local/patients.jar' >> /etc/supervisor/conf.d/patients.conf"
         ssh root@${{ secrets.HOST }} "echo 'autostart=true' >> /etc/supervisor/conf.d/patients.conf"
