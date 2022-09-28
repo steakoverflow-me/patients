@@ -79,11 +79,13 @@
 (def dataset-list
   (try
     (map
-     (comp (fn [p] (update p :gender_id (fn [g-id] (Integer/parseInt g-id))))
-           (fn [p]
-             (let [bd-in (:birthdate p)
-                   bd    (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
-               (ld/parse bd))))
+     (comp (fn [p] (update p :gender_id
+                           (fn [g-id]
+                             (Integer/parseInt g-id))))
+           (fn [p] (update p :birthdate
+                           (fn [bd-in]
+                             (let [bd (if (= (type bd-in) String) (subs bd-in 0 10) bd-in)]
+                               (ld/parse bd))))))
      (:objects (json/read-json (slurp "dev/dataset.json"))))
     (catch Exception e [])))
 
