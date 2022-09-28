@@ -1,6 +1,6 @@
 (ns patients.script.macros)
 
-(defmacro filter-input [field props] ;; multiple arity?
+(defmacro filter-input [field props]
   `[patients.script.app/input (merge {:class "w-full"
                                       :type "text"
                                       :value (~field @patients.script.app/filters)

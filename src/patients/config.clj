@@ -1,23 +1,18 @@
 (ns patients.config)
 
 (def db-user     (or (System/getenv "DB_USER")
-                     ;; "lpdxmsnq"))
                      "postgres"))
 
 (def db-password (or (System/getenv "DB_PASSWORD")
-                     ;; "9PhqCC0XKXI8m9y86NBQcBfTO6XAKgeV"))
                      "postgrespw"))
 
 (def db-host     (or (System/getenv "DB_HOST")
-                     ;; "topsy.db.elephantsql.com"))
                      "0.0.0.0"))
 
 (def db-port     (or (System/getenv "DB_PORT")
-                     ;; ""))
                      "5432"))
 
 (def db-name     (or (System/getenv "DB_NAME")
-                     ;; "lpdxmsnq"))
                      "patients"))
 
 (def db-structure '{:columns
